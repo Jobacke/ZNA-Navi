@@ -1,0 +1,29 @@
+{
+  "app": "zna-navi",
+  "v": 1,
+  "updated": "2026-11-12",
+  "items": [
+    {"name": "Augustinum", "group": "ZNA", "w3w": "kurve.trinken.exzellentes", "lat": 48.122049, "lon": 11.487464},
+    {"name": "Barmherzige Brüder", "group": "ZNA", "w3w": "offenen.nachbau.lesbar", "lat": 48.155846, "lon": 11.510649},
+    {"name": "Bogenhausen", "group": "ZNA", "w3w": "vorweisen.gelangen.stroh", "lat": 48.154579, "lon": 11.624333},
+    {"name": "DHZ", "group": "ZNA", "w3w": "erringen.weicher.duften", "lat": 48.152288, "lon": 11.548759},
+    {"name": "Dritter Orden", "group": "ZNA", "w3w": "lenker.helfern.kinosaal", "lat": 48.165575, "lon": 11.505153},
+    {"name": "Ebersberg", "group": "ZNA", "w3w": "gelder.magen.schar", "lat": 48.076717, "lon": 11.960774},
+    {"name": "Großhadern", "group": "ZNA", "w3w": "anstreben.angezeigt.farben", "lat": 48.112427, "lon": 11.469578},
+    {"name": "Harlaching", "group": "ZNA", "w3w": "ehen.manche.testpilot", "lat": 48.086446, "lon": 11.556827},
+    {"name": "Haunersche Kinderklinik", "group": "ZNA", "w3w": "linse.geld.bringen", "lat": 48.130242, "lon": 11.558944},
+    {"name": "Heckscher Kinderklinik", "group": "ZNA", "w3w": "angedacht.ulmen.tannen", "lat": 48.114179, "lon": 11.582708},
+    {"name": "Helios Pasing", "group": "ZNA", "w3w": "winkel.bürste.kosten", "lat": 48.143906, "lon": 11.453463},
+    {"name": "Helios Perlach", "group": "ZNA", "w3w": "gebäude.gesang.betonung", "lat": 48.102267, "lon": 11.62926},
+    {"name": "Intern. Klinikum München Süd „Müller“", "group": "ZNA", "w3w": "erfreut.innerhalb.hindert", "lat": 48.102401, "lon": 11.547703},
+    {"name": "Kinder Schwabing", "group": "ZNA", "w3w": "lebendig.schwarm.fernseher", "lat": 48.171855, "lon": 11.581048},
+    {"name": "Klinikum München Süd „Rinecker“", "group": "ZNA", "w3w": "heftig.mitgefühl.trinken", "lat": 48.103237, "lon": 11.547985},
+    {"name": "Neuperlach", "group": "ZNA", "w3w": "nicht.atem.worunter", "lat": 48.094909, "lon": 11.655342},
+    {"name": "Neuwittelsbach", "group": "ZNA", "w3w": "geschenkt.heben.eisbein", "lat": 48.157193, "lon": 11.525804},
+    {"name": "Portalklinik", "group": "ZNA", "w3w": "lenkung.manche.preis", "lat": 48.132748, "lon": 11.561045},
+    {"name": "RK1", "group": "ZNA", "w3w": "vorzeitig.tante.unter", "lat": 48.154067, "lon": 11.531503},
+    {"name": "Rechts der Isar", "group": "ZNA", "w3w": "einreise.becken.eule", "lat": 48.136225, "lon": 11.601095},
+    {"name": "Rechts der Isar Tor 6", "group": "ZNA", "w3w": "atomen.volles.dauernd", "lat": 48.138247, "lon": 11.599519},
+    {"name": "Stroke Haar", "group": "ZNA", "w3w": "ausweg.pflegen.zwischen", "lat": 48.117198, "lon": 11.746346}
+  ]
+}

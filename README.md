@@ -6,4 +6,4 @@ PWA für iPhone: Ziele (z. B. ZNA-Liste aus what3words inkl. Koordinaten) import
 
 **Installation:** https://zna.vjbackhaus.de/ in Safari öffnen → Teilen → „Zum Home-Bildschirm“.
 
-Alle Ziele werden nur lokal auf dem Gerät gespeichert.
+Die Zielliste steht in `zna.json` – ändern per Stift-Symbol auf GitHub, die Handys bieten das Update beim nächsten Öffnen an. Adresssuche über OpenStreetMap (Photon/Nominatim).

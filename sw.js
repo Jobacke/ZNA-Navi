@@ -1,5 +1,5 @@
 // ZNA-Navi Service Worker – App startet auch ohne Netz
-const CACHE = 'zna-navi-v1';
+const CACHE = 'zna-navi-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
