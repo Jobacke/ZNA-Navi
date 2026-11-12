@@ -50,6 +50,8 @@
   .navsel{display:flex;margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
   .navsel button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px 4px;border-radius:9px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
   .navsel button.on{background:var(--text);color:var(--bg)}
+  .navsel button .op{display:none;margin-left:5px;font-size:13px}
+  .navsel button.on .op{display:inline}
   #btnMic.on{background:var(--addr);border-color:var(--addr);animation:pulse 1.2s infinite}
   @keyframes pulse{50%{opacity:.6}}
 
@@ -150,7 +152,7 @@
     </button>
   </form>
   <div class="navsel" id="navSel" aria-label="Navigations-App">
-    <button type="button" data-app="waze">Waze</button><button type="button" data-app="gmaps">Google Maps</button><button type="button" data-app="apple">Apple Karten</button>
+    <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps">Google Maps<span class="op">↗</span></button><button type="button" data-app="apple">Apple Karten<span class="op">↗</span></button>
   </div>
 </header>
 <div id="hdrSpace" aria-hidden="true"></div>
@@ -321,7 +323,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.5.2';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -446,6 +448,12 @@ function navUrl(it, force, appOverride){
     : `https://www.google.com/maps/dir/?api=1&destination=${lat}%2C${lon}&travelmode=driving&dir_action=navigate`;
   if(app === 'apple') return sch ? `maps://?daddr=${lat},${lon}&dirflg=d` : `https://maps.apple.com/?daddr=${lat},${lon}&dirflg=d`;
   return sch ? `waze://?ll=${lat},${lon}&navigate=yes` : `https://waze.com/ul?ll=${lat}%2C${lon}&navigate=yes&utm_source=zna-navi`;
+}
+function appOpenUrl(app){
+  const sch = linkMode() === 'scheme' && !(isAndroid && app !== 'waze');
+  if(app === 'gmaps') return sch ? 'comgooglemaps://' : 'https://www.google.com/maps/';
+  if(app === 'apple') return sch ? 'maps://' : 'https://maps.apple.com/';
+  return sch ? 'waze://' : 'https://waze.com/ul?utm_source=zna-navi';
 }
 function navSearchUrl(q){
   const e = encodeURIComponent(q), app = curApp();
@@ -646,7 +654,15 @@ $('#list').addEventListener('click', e => {
 });
 $('#navSel').addEventListener('click', e => {
   const b = e.target.closest('button[data-app]'); if(!b) return;
-  state.settings.navApp = b.dataset.app; save(); render();
+  const app = b.dataset.app;
+  if(app === curApp()){
+    // Doppelfunktion: bereits gewählte App antippen = App öffnen
+    skipNextOpen = true;
+    location.href = appOpenUrl(app);
+    return;
+  }
+  state.settings.navApp = app; save(); render();
+  toast(`Routen mit ${APPS[app]} – nochmal antippen öffnet ${APPS[app]}`, 2600);
 });
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;

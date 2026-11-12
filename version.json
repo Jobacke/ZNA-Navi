@@ -1,5 +1,5 @@
 {
-  "version": "1.5.1",
+  "version": "1.5.2",
   "date": "2026-11-12",
-  "notes": "Blitzer.de-Autostart: Zeitpunkt einstellbar (jedes Öffnen / 30 Min / 3 Std)"
+  "notes": "Navi-Umschalter: gewählte App nochmal antippen öffnet sie direkt"
 }
