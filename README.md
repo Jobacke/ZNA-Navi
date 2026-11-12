@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.5.0 | 2026-11-12 | Option: Blitzer.de PRO beim ersten Öffnen (nach 3 h Pause) per Kurzbefehl „Warnmodus starten“ |
 | 1.4.2 | 2026-11-12 | Icon-Dateien umbenannt (iOS-Cache umgehen) |
 | 1.4.1 | 2026-11-12 | Neues App-Icon „Neon-Puls“ |
 | 1.4.0 | 2026-11-12 | Umschalter Waze / Google Maps / Apple Karten; Hochladen in die Serverliste per GitHub-Schlüssel mit Abgleich ohne Datenverlust |

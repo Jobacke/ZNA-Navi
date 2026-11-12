@@ -1,5 +1,5 @@
 {
-  "version": "1.4.2",
+  "version": "1.5.0",
   "date": "2026-11-12",
-  "notes": "Icon-Dateien neu benannt, damit iOS das neue Icon sicher lädt"
+  "notes": "Blitzer.de PRO beim ersten Öffnen starten (per Kurzbefehl)"
 }

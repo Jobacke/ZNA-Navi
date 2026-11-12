@@ -159,6 +159,7 @@
 <div id="srvBanner" class="banner info" hidden></div>
 <div id="appBanner" class="banner info" hidden></div>
 <div id="syncBar" class="banner" hidden></div>
+<div id="blzBar" class="banner info" hidden></div>
 <div class="status" id="status"></div>
 <main id="list"></main>
 
@@ -211,6 +212,23 @@
     </div>
     <label class="check"><input type="checkbox" id="setAutoSrv"> Beim Öffnen nach Updates suchen</label>
     <div class="hint" id="srvInfo"></div>
+
+    <h3>Blitzer.de PRO</h3>
+    <label class="check"><input type="checkbox" id="blzOn"> Beim ersten Öffnen Blitzer.de PRO starten</label>
+    <div class="hint">„Erstes Öffnen“ = wenn ZNA-Navi länger als <b>3 Stunden</b> nicht benutzt wurde. Rückkehr aus Waze löst nichts aus.</div>
+    <div class="help" style="margin-top:8px">
+      Einmal einrichten (Blitzer.de hat keinen direkten Link, daher über einen Kurzbefehl):
+      <ol>
+        <li>Kurzbefehle-App → <b>+</b> → Aktion suchen: <b>Blitzer.de</b> → <b>„Warnmodus starten“</b> (nicht „App öffnen“)</li>
+        <li>Kurzbefehl oben umbenennen in <b>Blitzer starten</b> → Fertig</li>
+        <li>iPhone-Einstellungen → Apps → Blitzer.de PRO → Standort: <b>Immer</b></li>
+        <li>In Blitzer.de: Menü → Einstellungen → Experten-Optionen → <b>Warnungen im Hintergrund</b> an</li>
+      </ol>
+      Beim Start springt iOS kurz in die Kurzbefehle-App. Zurück zu ZNA-Navi: oben links auf <b>◀ ZNA-Navi</b> tippen.
+    </div>
+    <label for="blzName">Name des Kurzbefehls</label>
+    <input class="field" id="blzName" placeholder="Blitzer starten" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="row" style="margin-top:8px"><button class="btn small" id="blzTest">Jetzt testen</button></div>
 
     <h3>Hochladen zum Server</h3>
     <div class="help">
@@ -297,13 +315,13 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.5.0';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
 let canStore = true;
-const DEFAULTS = { linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
+const DEFAULTS = { blz:{ on:false, name:'Blitzer starten' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
   gh:{ token:'', repo:'Jobacke/ZNA-Navi', path:'zna.json', branch:'main', auto:true } };
 let state = { items:[], settings:{...DEFAULTS} };
 function load(){
@@ -966,6 +984,8 @@ function openSettings(){
   $('#ghToken').value = gh().token || '';
   $('#ghRepo').value = gh().repo || '';
   $('#ghAuto').checked = gh().auto !== false;
+  $('#blzOn').checked = !!blz().on;
+  $('#blzName').value = blz().name || '';
   if(state.settings.group && state.settings.group !== '__all') $('#impGroup').value = state.settings.group;
   $('#ovSet').classList.add('show');
 }
@@ -975,6 +995,10 @@ $('#setAutoNear').onchange = e => { state.settings.autoNear = e.target.checked; 
 $('#setAutoSrv').onchange = e => { state.settings.autoSrv = e.target.checked; save(); };
 $('#setKey').onchange = e => { state.settings.w3wKey = e.target.value.trim(); save(); };
 $('#srvLoad').onclick = () => checkServer(true);
+const setBlz = patch => { state.settings.blz = { ...blz(), ...patch }; save(); };
+$('#blzOn').onchange = e => setBlz({ on: e.target.checked });
+$('#blzName').onchange = e => setBlz({ name: e.target.value.trim() || DEFAULTS.blz.name });
+$('#blzTest').onclick = () => { setBlz({ name: $('#blzName').value.trim() || DEFAULTS.blz.name }); location.href = blzUrl(); };
 const setGh = patch => { state.settings.gh = { ...gh(), ...patch }; save(); updSync(); };
 $('#ghToken').onchange = e => setGh({ token: e.target.value.trim() });
 $('#ghRepo').onchange = e => setGh({ repo: e.target.value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'') || DEFAULTS.gh.repo });
@@ -1062,6 +1086,32 @@ async function checkAppVersion(){
   }catch(e){}
 }
 
+/* ---------- Blitzer.de PRO ---------- */
+const BLZ_GAP = 3 * 60 * 60 * 1000; // 3 Stunden = neue Fahrt/Schicht
+const blz = () => ({ ...DEFAULTS.blz, ...(state.settings.blz || {}) });
+const blzUrl = () => 'shortcuts://run-shortcut?name=' + encodeURIComponent(blz().name || DEFAULTS.blz.name);
+function blzBar(show){
+  const b = $('#blzBar');
+  if(!show){ b.hidden = true; return; }
+  b.innerHTML = `<b>Blitzer.de PRO starten?</b><div class="row"><a class="btn small ok" id="blzGo" href="${esc(blzUrl())}" style="text-align:center;text-decoration:none">Blitzer.de starten</a><button class="btn small" id="blzSkip">Nicht jetzt</button></div>`;
+  b.hidden = false;
+  $('#blzGo').onclick = () => setTimeout(() => blzBar(false), 300);
+  $('#blzSkip').onclick = () => blzBar(false);
+}
+function blzLaunch(){
+  // Automatisch versuchen; falls iOS den Sprung ohne Antippen blockiert, erscheint ein Knopf
+  let left = false;
+  const onHide = () => { if(document.visibilityState === 'hidden') left = true; };
+  document.addEventListener('visibilitychange', onHide);
+  try{ location.href = blzUrl(); }catch(e){}
+  setTimeout(() => { document.removeEventListener('visibilitychange', onHide); if(!left) blzBar(true); }, 1500);
+}
+function touchUse(){
+  const now = Date.now(), last = +state.settings.lastUse || 0;
+  state.settings.lastUse = now; save();
+  if(blz().on && now - last > BLZ_GAP) blzLaunch();
+}
+
 /* ---------- Kopfzeile ---------- */
 function fitHeader(){ $('#hdrSpace').style.height = $('header').getBoundingClientRect().height + 'px'; }
 try{ new ResizeObserver(fitHeader).observe($('header')); }catch(e){ window.addEventListener('resize', fitHeader); }
@@ -1071,6 +1121,7 @@ load();
 showVersion();
 fitHeader();
 updSync();
+touchUse();
 checkAppVersion();
 if(!canStore) $('#storageWarn').hidden = false;
 const qp = new URLSearchParams(location.search).get('q');
@@ -1087,8 +1138,9 @@ else if(qp && navigator.permissions){
   navigator.permissions.query({name:'geolocation'}).then(p => { if(p.state === 'granted') getPos().then(p2 => { pos = p2; render(); }).catch(()=>{}); }).catch(()=>{});
 }
 document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState !== 'visible') return;
+  if(document.visibilityState !== 'visible'){ state.settings.lastUse = Date.now(); save(); return; }
   if(resetOnReturn) clearSearch();
+  touchUse();
   if(byDistance) locate(true);
   if(state.settings.autoSrv) checkServer(false);
   checkAppVersion();
