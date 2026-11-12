@@ -1,5 +1,5 @@
 {
-  "version": "1.5.0",
+  "version": "1.5.1",
   "date": "2026-11-12",
-  "notes": "Blitzer.de PRO beim ersten Öffnen starten (per Kurzbefehl)"
+  "notes": "Blitzer.de-Autostart: Zeitpunkt einstellbar (jedes Öffnen / 30 Min / 3 Std)"
 }
