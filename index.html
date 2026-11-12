@@ -284,6 +284,13 @@
     </select>
     <div class="hint">Öffnet sich statt der Navi-App eine Webseite, die andere Variante wählen.</div>
 
+    <h3>Darstellung</h3>
+    <label for="setTop">Abstand oben zur Statusleiste (Uhrzeit/Akku)</label>
+    <select class="field" id="setTop">
+      <option value="auto">Automatisch</option>
+      <option value="plus">Extra Abstand (falls Uhrzeit/Akku die App überdecken)</option>
+    </select>
+
     <h3>Sortierung</h3>
     <select class="field" id="setSort">
       <option value="usage">Meistgenutzt zuerst</option>
@@ -338,13 +345,13 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
 let canStore = true;
-const DEFAULTS = { blz:{ on:false, name:'Blitzer starten', gap:30, end:false, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
+const DEFAULTS = { topPad:'auto', blz:{ on:false, name:'Blitzer starten', gap:30, end:false, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
   gh:{ token:'', repo:'Jobacke/ZNA-Navi', path:'zna.json', branch:'main', auto:true } };
 let state = { items:[], settings:{...DEFAULTS} };
 function load(){
@@ -1025,6 +1032,7 @@ function updSync(){
 function openSettings(){
   $('#setLink').value = state.settings.linkMode;
   $('#setSort').value = state.settings.sort;
+  $('#setTop').value = state.settings.topPad || 'auto';
   $('#setAutoSrv').checked = !!state.settings.autoSrv;
   $('#setKey').value = state.settings.w3wKey || '';
   $('#ghToken').value = gh().token || '';
@@ -1040,6 +1048,7 @@ function openSettings(){
   $('#ovSet').classList.add('show');
 }
 $('#setLink').onchange = e => { state.settings.linkMode = e.target.value; save(); render(); };
+$('#setTop').onchange = e => { state.settings.topPad = e.target.value; save(); fitHeader(); };
 $('#setSort').onchange = e => { state.settings.sort = e.target.value; save(); render(); };
 $('#setAutoSrv').onchange = e => { state.settings.autoSrv = e.target.checked; save(); };
 $('#setKey').onchange = e => { state.settings.w3wKey = e.target.value.trim(); save(); };
@@ -1188,7 +1197,8 @@ function fitHeader(){
   const envTop = probe.getBoundingClientRect().height; probe.remove();
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const underBar = isStandalone() && ios && envTop < 1 && Math.abs(window.innerHeight - screen.height) < 2;
-  document.documentElement.style.setProperty('--sat', underBar ? '50px' : 'env(safe-area-inset-top)');
+  const forced = state.settings.topPad === 'plus';
+  document.documentElement.style.setProperty('--sat', forced ? 'max(env(safe-area-inset-top), 56px)' : (underBar ? '50px' : 'env(safe-area-inset-top)'));
 }
 window.addEventListener('resize', fitHeader);
 window.addEventListener('orientationchange', () => setTimeout(fitHeader, 300));
