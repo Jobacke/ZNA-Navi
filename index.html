@@ -30,7 +30,8 @@
     padding:12px 14px 10px;border-bottom:1px solid var(--line)}
   .bar{display:flex;align-items:center;gap:10px}
   .logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
-  h1{font-size:21px;margin:0;flex:1;letter-spacing:.2px}
+  h1{font-size:21px;margin:0;flex:1;letter-spacing:.2px;line-height:1.1}
+  h1 .ver{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.3px;margin-top:2px}
   .iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;flex:none}
   .iconbtn.on{background:var(--accent);border-color:var(--accent)}
   .iconbtn svg{width:22px;height:22px}
@@ -123,7 +124,7 @@
     <div class="logo" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l7 17-7-4-7 4z" fill="#fff"/></svg>
     </div>
-    <h1>ZNA-Navi</h1>
+    <h1>ZNA-Navi<span class="ver" id="verHead"></span></h1>
     <button class="iconbtn" id="btnNearest" title="Nach Entfernung sortieren" aria-label="Nächstes Ziel finden">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
     </button>
@@ -145,6 +146,7 @@
 
 <div id="storageWarn" class="banner" hidden>Dieser Browser erlaubt hier kein dauerhaftes Speichern. Änderungen gehen beim Schließen verloren.</div>
 <div id="srvBanner" class="banner info" hidden></div>
+<div id="appBanner" class="banner info" hidden></div>
 <div class="status" id="status"></div>
 <main id="list"></main>
 
@@ -186,6 +188,7 @@
 <div class="ov" id="ovSet">
   <div class="sheet">
     <h2>Einstellungen<button class="btn small" data-close>Schließen</button></h2>
+    <div class="help" id="verBox"></div>
 
     <h3>Serverliste</h3>
     <div class="help">
@@ -251,7 +254,7 @@
     <input class="field" id="setKey" placeholder="nur für Umrechnung ohne Koordinaten" autocapitalize="off" autocorrect="off" spellcheck="false">
     <div class="hint">Wird nur gebraucht, um what3words-Adressen ohne Koordinaten umzurechnen. Kostenpflichtiger API-Tarif bei what3words; das Premium-Abo der App reicht dafür nicht.</div>
 
-    <div class="hint" style="margin-top:18px">Adresssuche: © OpenStreetMap-Mitwirkende (Photon/Nominatim). ZNA-Navi v1.1</div>
+    <div class="hint" style="margin-top:18px">Adresssuche: © OpenStreetMap-Mitwirkende (Photon/Nominatim).</div>
   </div>
 </div>
 
@@ -260,6 +263,8 @@
 <script>
 (() => {
 'use strict';
+const APP_VERSION = '1.2.0';
+const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
@@ -834,8 +839,36 @@ $('#expCopy').onclick = async () => {
 };
 $('#expShow').onclick = () => { const t = $('#expText'); t.hidden = !t.hidden; t.value = exportText(); if(!t.hidden){ t.focus(); t.select(); } };
 
+/* ---------- Version ---------- */
+function showVersion(){
+  $('#verHead').textContent = 'Version ' + APP_VERSION;
+  $('#verBox').innerHTML = `<b>ZNA-Navi ${APP_VERSION}</b> · Stand ${APP_DATE}<br><span class="hint">Läuft als ${isStandalone() ? 'Home-Bildschirm-App' : 'Webseite im Browser'}</span>`;
+}
+const vNum = v => String(v).split('.').map(n => parseInt(n,10)||0);
+const newer = (a, b) => { const x = vNum(a), y = vNum(b); for(let i=0;i<3;i++){ if((x[i]||0) !== (y[i]||0)) return (x[i]||0) > (y[i]||0); } return false; };
+async function checkAppVersion(){
+  try{
+    const r = await fetch('version.json?t=' + Date.now(), { cache:'no-store' });
+    if(!r.ok) return;
+    const d = await r.json();
+    if(d.version && newer(d.version, APP_VERSION)){
+      const b = $('#appBanner');
+      b.innerHTML = `<b>Neue App-Version ${esc(d.version)} verfügbar</b> (installiert: ${APP_VERSION})${d.notes ? '<br>' + esc(d.notes) : ''}
+        <div class="row"><button class="btn small ok" id="appReload">Jetzt aktualisieren</button></div>`;
+      b.hidden = false;
+      $('#appReload').onclick = async () => {
+        try{ const regs = await navigator.serviceWorker?.getRegistrations?.(); for(const g of (regs||[])) await g.update(); }catch(e){}
+        try{ const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }catch(e){}
+        location.reload();
+      };
+    }
+  }catch(e){}
+}
+
 /* ---------- Start ---------- */
 load();
+showVersion();
+checkAppVersion();
 if(!canStore) $('#storageWarn').hidden = false;
 const qp = new URLSearchParams(location.search).get('q');
 if(qp){
@@ -854,6 +887,7 @@ document.addEventListener('visibilitychange', () => {
   if(document.visibilityState !== 'visible') return;
   if(byDistance) locate(true);
   if(state.settings.autoSrv) checkServer(false);
+  checkAppVersion();
 });
 if('serviceWorker' in navigator && location.protocol === 'https:'){
   try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
