@@ -1,5 +1,5 @@
 {
-  "version": "1.7.0",
+  "version": "1.7.1",
   "date": "2026-11-12",
-  "notes": "Mikrofon-Knopf überarbeitet: Text erscheint live im Suchfeld, automatischer Wechsel zum Tastatur-Diktat"
+  "notes": "Mikrofon: Siri-Kurzbefehl-Modus (1× tippen, sprechen, losfahren); im Home-Bildschirm sofort Tastatur-Diktat statt Fehlversuch"
 }

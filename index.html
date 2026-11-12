@@ -300,11 +300,23 @@
 
     <label for="setMic">Mikrofon-Knopf</label>
     <select class="field" id="setMic">
-      <option value="auto">Automatisch (empfohlen)</option>
-      <option value="speech">Immer Spracherkennung der App</option>
+      <option value="shortcut">Siri-Kurzbefehl – 1× tippen, sprechen, fertig (empfohlen)</option>
+      <option value="auto">Automatisch (Home-Bildschirm: Tastatur-Diktat)</option>
       <option value="keyboard">Immer Diktat der iPhone-Tastatur</option>
+      <option value="speech">Immer Spracherkennung der App (nur im Browser)</option>
     </select>
-    <div class="hint">„Automatisch“ nutzt die Spracherkennung und wechselt von selbst zum Tastatur-Diktat, wenn sie auf diesem iPhone nicht zuverlässig läuft. Für das Tastatur-Diktat muss unter iPhone-Einstellungen → Allgemein → Tastatur die <b>Diktierfunktion</b> an sein.</div>
+    <div class="hint">Apple sperrt die Spracherkennung in Home-Bildschirm-Apps. Am schnellsten ist daher der Siri-Kurzbefehl: Mikrofon antippen → sofort sprechen → los.</div>
+    <div class="help" style="margin-top:8px">
+      Kurzbefehl einmal anlegen (Kurzbefehle-App → <b>+</b>), Name: <b id="micScName">ZNA Sprache</b>
+      <ol>
+        <li>Aktion <b>„Text diktieren“</b> (Suchwort „diktieren“) → Sprache <b>Deutsch</b>, „Diktat beenden“: <b>Nach Pause</b></li>
+        <li><b>Variante A – direkt losfahren:</b> Aktion <b>„Route anzeigen“</b> bzw. „Wegbeschreibung anzeigen“ (Suchwort „Route“) → Ziel: <b>Diktierter Text</b> → App: <b>Waze</b> (oder Google Maps/Karten)</li>
+        <li><b>Variante B – erst Treffer prüfen:</b> statt Schritt 2 Aktion <b>„URL codieren“</b> und dann <b>„URL öffnen“</b> mit <code>https://zna.vjbackhaus.de/?q=</code> + „Codierte URL“ – die Adresse steht dann im Suchfeld (öffnet in Safari).</li>
+      </ol>
+    </div>
+    <label for="micSc">Name des Sprach-Kurzbefehls</label>
+    <input class="field" id="micSc" placeholder="ZNA Sprache" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="hint">Für das Tastatur-Diktat muss unter iPhone-Einstellungen → Allgemein → Tastatur die <b>Diktierfunktion</b> an sein.</div>
 
     <h3>Sortierung</h3>
     <select class="field" id="setSort">
@@ -360,7 +372,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -743,12 +755,17 @@ function closeAll(){ document.querySelectorAll('.ov').forEach(o => o.classList.r
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null, recText = '', recTimer = null, recHard = null, recStart = 0, recErr = false;
 const PH = $('#search').placeholder;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
 function micMode(){
   const m = state.settings.micMode || 'auto';
+  if(m === 'shortcut') return 'shortcut';
   if(m === 'keyboard' || !SR) return 'keyboard';
   if(m === 'speech') return 'speech';
+  // Automatisch: In iOS-Home-Bildschirm-Apps sperrt Apple die Spracherkennung → gleich Tastatur-Diktat
+  if(isIOS && isStandalone()) return 'keyboard';
   return state.settings.srFailed ? 'keyboard' : 'speech';
 }
+const micScUrl = () => 'shortcuts://run-shortcut?name=' + encodeURIComponent(state.settings.micSc || 'ZNA Sprache');
 function micHint(text, ms){
   const h = $('#micHint'); clearTimeout(micHint._t);
   if(!text){ h.hidden = true; return; }
@@ -771,7 +788,9 @@ $('#search').addEventListener('input', () => micHint(''));
 $('#btnMic').onclick = () => {
   if(rec){ stopRec(); return; }
   micHint('');
-  if(micMode() === 'keyboard') return startKeyboardDictation();
+  const mode = micMode();
+  if(mode === 'shortcut'){ skipNextOpen = true; location.href = micScUrl(); return; }
+  if(mode === 'keyboard') return startKeyboardDictation();
   try{
     rec = new SR(); recText = ''; recErr = false; recStart = Date.now();
     rec.lang = 'de-DE'; rec.interimResults = true; rec.maxAlternatives = 1; rec.continuous = false;
@@ -1087,6 +1106,8 @@ function openSettings(){
   $('#setSort').value = state.settings.sort;
   $('#setTop').value = state.settings.topPad || 'auto';
   $('#setMic').value = state.settings.micMode || 'auto';
+  $('#micSc').value = state.settings.micSc || '';
+  $('#micScName').textContent = state.settings.micSc || 'ZNA Sprache';
   $('#setAutoSrv').checked = !!state.settings.autoSrv;
   $('#setKey').value = state.settings.w3wKey || '';
   $('#ghToken').value = gh().token || '';
@@ -1103,6 +1124,7 @@ function openSettings(){
 }
 $('#setLink').onchange = e => { state.settings.linkMode = e.target.value; save(); render(); };
 $('#setMic').onchange = e => { state.settings.micMode = e.target.value; state.settings.srFailed = false; save(); };
+$('#micSc').onchange = e => { state.settings.micSc = e.target.value.trim(); $('#micScName').textContent = state.settings.micSc || 'ZNA Sprache'; save(); };
 $('#setTop').onchange = e => { state.settings.topPad = e.target.value; save(); fitHeader(); };
 $('#setSort').onchange = e => { state.settings.sort = e.target.value; save(); render(); };
 $('#setAutoSrv').onchange = e => { state.settings.autoSrv = e.target.checked; save(); };
