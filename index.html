@@ -73,6 +73,8 @@
   .tile .save{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;color:var(--muted);font-size:20px}
   .editing .tile .go{background:var(--panel2);border:1px solid var(--line)}
   .loading{color:var(--muted);font-size:14px;padding:6px 4px}
+  .back{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:700;font-size:17px;cursor:pointer}
+  .back svg{width:20px;height:20px}
 
   .empty{padding:26px 18px;text-align:center;color:var(--muted);background:var(--panel);border-radius:var(--r);border:1px dashed var(--line)}
   .empty h2{color:var(--text);font-size:19px;margin:0 0 8px}
@@ -176,7 +178,7 @@
     </div>
     <label for="edNote">Notiz (optional)</label>
     <input class="field" id="edNote" placeholder="z. B. Liegendanfahrt über Rückseite">
-    <div class="hint" id="edSrvHint" hidden>Diese Gruppe kommt von der Serverliste. Lokale Änderungen werden beim nächsten Server-Update überschrieben – dauerhaft ändern über zna.json im Repo.</div>
+    <div class="hint" id="edSrvHint" hidden>Diese Gruppe kommt von der Serverliste: Was du hier speicherst, wird beim nächsten Server-Update überschrieben bzw. entfernt. Für eigene Ziele eine andere Gruppe wählen (z. B. „Eigene“) – oder dauerhaft in zna.json eintragen.</div>
     <div class="row" style="margin-top:18px">
       <button class="btn danger" id="edDelete">Löschen</button>
       <button class="btn primary" id="edSave">Speichern</button>
@@ -263,7 +265,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.3.0';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -504,6 +506,8 @@ function render(){
     return;
   }
 
+  if(q) html += `<button class="back" id="btnBack" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Zurück zur Liste</button>`;
+
   if(items.length){
     if(q) html += `<div class="sec">Gespeicherte Ziele</div>`;
     html += items.map((i, idx) => {
@@ -544,10 +548,18 @@ function render(){
     html += `<a class="tile waze" href="${esc(wazeSearchUrl(query.trim()))}">
       <div class="go">${ICON_SEARCH}</div><div class="txt"><div class="name">In Waze suchen</div><div class="sub"><span>„${esc(query.trim())}“ – falls oben nicht dabei</span></div></div></a>`;
   }else if(!items.length){
-    html = `<div class="empty">Keine Treffer.</div>`;
+    html += `<div class="empty">Keine Treffer.</div>`;
   }
   L.innerHTML = html;
+  const bb = $('#btnBack'); if(bb) bb.onclick = clearSearch;
 }
+
+function clearSearch(){
+  query = ''; $('#search').value = ''; resetOnReturn = false;
+  if(rec){ try{ rec.stop(); }catch(e){} }
+  scheduleAddr(); render(); window.scrollTo({ top:0 });
+}
+let resetOnReturn = false;
 
 /* ---------- Interaktion Liste ---------- */
 function countUse(it){ it.uses = (it.uses||0) + 1; it.lastUsed = Date.now(); save(); }
@@ -561,18 +573,20 @@ $('#list').addEventListener('click', e => {
     countUse(it);
   }
   // sonst: Adress- oder Waze-Kachel – echter Link öffnet Waze
+  if(query.trim()) resetOnReturn = true;
 });
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
   state.settings.group = b.dataset.g; save(); render();
 });
 $('#search').addEventListener('input', e => { query = e.target.value; scheduleAddr(); render(); });
+$('#search').addEventListener('keydown', e => { if(e.key === 'Escape'){ e.preventDefault(); clearSearch(); $('#search').blur(); } });
 $('#searchForm').addEventListener('submit', e => {
   // Eingabetaste: ersten startbaren Treffer öffnen
   e.preventDefault();
   const first = [...document.querySelectorAll('#list .tile')].find(t => t.getAttribute('href') && t.getAttribute('href') !== '#' && !t.classList.contains('waze'));
   if(!first){ toast(addr.status==='loading' ? 'Suche läuft noch …' : 'Kein Treffer zum Starten'); return; }
-  $('#search').blur();
+  $('#search').blur(); resetOnReturn = true;
   if(first.dataset.id){ const it = state.items.find(x => x.id === first.dataset.id); if(it) countUse(it); }
   if(first.target === '_blank') window.open(first.href, '_blank'); else location.href = first.href;
 });
@@ -620,23 +634,25 @@ $('#btnMic').onclick = () => {
 };
 
 /* ---------- Editor ---------- */
-let edItem = null, delArmed = false;
+let edItem = null, delArmed = false, edFromAddr = false;
 function openEditor(it, pre){
-  edItem = it; delArmed = false;
+  edItem = it; delArmed = false; edFromAddr = !!pre;
   const src = it || pre || {};
   $('#edTitle').textContent = it ? 'Ziel bearbeiten' : 'Neues Ziel';
   $('#edName').value = src.name || '';
-  $('#edGroup').value = it?.group || (state.settings.group !== '__all' ? state.settings.group : 'ZNA');
+  $('#edGroup').value = it?.group || (pre ? 'Eigene' : (state.settings.group !== '__all' ? state.settings.group : 'ZNA'));
   $('#edW3w').value = src.w3w ? '///' + src.w3w : '';
   $('#edCoords').value = hasCoords(src) ? `${(+src.lat).toFixed(6)}, ${(+src.lon).toFixed(6)}` : '';
   $('#edNote').value = src.note || '';
   $('#edDelete').style.display = it ? '' : 'none';
   $('#edDelete').textContent = 'Löschen';
-  $('#edSrvHint').hidden = !(it && (state.settings.srvGroups||[]).includes(it.group||'ZNA'));
+  updSrvHint();
   updW3wLink();
   $('#ovEdit').classList.add('show');
   if(!it && !pre) setTimeout(()=>$('#edName').focus(), 50);
 }
+function updSrvHint(){ $('#edSrvHint').hidden = !(state.settings.srvGroups||[]).includes($('#edGroup').value.trim() || 'ZNA'); }
+$('#edGroup').addEventListener('input', updSrvHint);
 function updW3wLink(){
   const w = parseW3W($('#edW3w').value, true);
   const a = $('#edOpenW3w');
@@ -684,9 +700,10 @@ $('#edSave').onclick = () => {
   if(c){ data.lat = c.lat; data.lon = c.lon; } else { data.lat = undefined; data.lon = undefined; }
   if(edItem) Object.assign(edItem, data);
   else state.items.push({ id: uid(), uses:0, ...data });
-  if(state.settings.group !== '__all') state.settings.group = data.group;
-  save(); closeAll(); render();
-  toast(c ? 'Gespeichert' : 'Gespeichert – Koordinaten fehlen noch', 2500);
+  if(state.settings.group !== '__all' && !edFromAddr) state.settings.group = data.group;
+  save(); closeAll();
+  if(query.trim()) clearSearch(); else render();
+  toast(!c ? 'Gespeichert – Koordinaten fehlen noch' : (edFromAddr ? `Gespeichert in Gruppe „${data.group}“` : 'Gespeichert'), 2500);
 };
 $('#edDelete').onclick = () => {
   if(!edItem) return;
@@ -885,6 +902,7 @@ else if(qp && navigator.permissions){
 }
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState !== 'visible') return;
+  if(resetOnReturn) clearSearch();
   if(byDistance) locate(true);
   if(state.settings.autoSrv) checkServer(false);
   checkAppVersion();
