@@ -1,6 +1,7 @@
 {
   "app": "zna-navi",
   "v": 1,
+  "rev": 1,
   "updated": "2026-11-12",
   "items": [
     {"name": "Augustinum", "group": "ZNA", "w3w": "kurve.trinken.exzellentes", "lat": 48.122049, "lon": 11.487464},

@@ -1,5 +1,5 @@
 {
-  "version": "1.3.1",
+  "version": "1.4.0",
   "date": "2026-11-12",
-  "notes": "Kopfzeile bleibt beim Scrollen oben fixiert"
+  "notes": "Google Maps & Apple Karten wählbar; neue Ziele per Hochladen dauerhaft in der Serverliste"
 }

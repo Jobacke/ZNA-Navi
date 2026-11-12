@@ -46,6 +46,9 @@
   .searchwrap{display:flex;gap:8px;margin-top:10px}
   .search{flex:1;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);outline:none}
   .search:focus{border-color:var(--blue)}
+  .navsel{display:flex;margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+  .navsel button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px 4px;border-radius:9px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+  .navsel button.on{background:var(--text);color:var(--bg)}
   #btnMic.on{background:var(--addr);border-color:var(--addr);animation:pulse 1.2s infinite}
   @keyframes pulse{50%{opacity:.6}}
 
@@ -147,12 +150,16 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
     </button>
   </form>
+  <div class="navsel" id="navSel" aria-label="Navigations-App">
+    <button type="button" data-app="waze">Waze</button><button type="button" data-app="gmaps">Google Maps</button><button type="button" data-app="apple">Apple Karten</button>
+  </div>
 </header>
 <div id="hdrSpace" aria-hidden="true"></div>
 
 <div id="storageWarn" class="banner" hidden>Dieser Browser erlaubt hier kein dauerhaftes Speichern. Änderungen gehen beim Schließen verloren.</div>
 <div id="srvBanner" class="banner info" hidden></div>
 <div id="appBanner" class="banner info" hidden></div>
+<div id="syncBar" class="banner" hidden></div>
 <div class="status" id="status"></div>
 <main id="list"></main>
 
@@ -178,11 +185,11 @@
     </div>
     <div class="row" style="margin-top:8px">
       <a class="btn small" id="edOpenW3w" href="#" target="_blank" rel="noopener" style="text-align:center;text-decoration:none;color:inherit">In what3words zeigen</a>
-      <button class="btn small" id="edCopyLink">Waze-Link kopieren</button>
+      <button class="btn small" id="edCopyLink">Navi-Link kopieren</button>
     </div>
     <label for="edNote">Notiz (optional)</label>
     <input class="field" id="edNote" placeholder="z. B. Liegendanfahrt über Rückseite">
-    <div class="hint" id="edSrvHint" hidden>Diese Gruppe kommt von der Serverliste: Was du hier speicherst, wird beim nächsten Server-Update überschrieben bzw. entfernt. Für eigene Ziele eine andere Gruppe wählen (z. B. „Eigene“) – oder dauerhaft in zna.json eintragen.</div>
+    <div class="hint" id="edSrvHint"></div>
     <div class="row" style="margin-top:18px">
       <button class="btn danger" id="edDelete">Löschen</button>
       <button class="btn primary" id="edSave">Speichern</button>
@@ -206,14 +213,36 @@
     <label class="check"><input type="checkbox" id="setAutoSrv"> Beim Öffnen nach Updates suchen</label>
     <div class="hint" id="srvInfo"></div>
 
-    <h3>Waze-Start</h3>
-    <label for="setLink">Linkart</label>
+    <h3>Hochladen zum Server</h3>
+    <div class="help">
+      Damit neue oder geänderte Ziele dauerhaft in <code>zna.json</code> landen und auf allen Handys ankommen, braucht die App einen GitHub-Schlüssel – nur für dieses eine Repo:
+      <ol>
+        <li>github.com → Profilbild → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b></li>
+        <li>Name „ZNA-Navi“, Ablauf z. B. 1 Jahr, <b>Repository access → Only select repositories → ZNA-Navi</b></li>
+        <li><b>Repository permissions → Contents → Read and write</b> → <b>Generate token</b> → kopieren</li>
+        <li>Unten einfügen → <b>Verbindung testen</b></li>
+      </ol>
+      Der Schlüssel bleibt nur auf diesem Handy. Geht das Handy verloren: Schlüssel auf GitHub löschen.
+    </div>
+    <label for="ghToken">GitHub-Schlüssel</label>
+    <input class="field" id="ghToken" type="password" placeholder="github_pat_…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <label for="ghRepo">Repo</label>
+    <input class="field" id="ghRepo" placeholder="Jobacke/ZNA-Navi" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <label class="check"><input type="checkbox" id="ghAuto"> Änderungen automatisch hochladen</label>
+    <div class="row" style="margin-top:10px">
+      <button class="btn small" id="ghTest">Verbindung testen</button>
+      <button class="btn small ok" id="ghUp">Jetzt hochladen</button>
+    </div>
+    <div class="hint" id="ghInfo"></div>
+
+    <h3>App-Start</h3>
+    <label for="setLink">Linkart (gilt für Waze, Google Maps, Apple Karten)</label>
     <select class="field" id="setLink">
       <option value="auto">Automatisch (empfohlen)</option>
-      <option value="scheme">Direkt per App-Schema (waze://)</option>
-      <option value="universal">Universal-Link (https://waze.com/ul)</option>
+      <option value="scheme">Direkt per App-Schema (waze://, comgooglemaps://, maps://)</option>
+      <option value="universal">Universal-Link (https://…)</option>
     </select>
-    <div class="hint">Öffnet sich statt Waze eine Webseite, die andere Variante wählen.</div>
+    <div class="hint">Öffnet sich statt der Navi-App eine Webseite, die andere Variante wählen.</div>
 
     <h3>Sortierung</h3>
     <select class="field" id="setSort">
@@ -269,13 +298,14 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.3.1';
+const APP_VERSION = '1.4.0';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
 let canStore = true;
-const DEFAULTS = { linkMode:'auto', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', srvGroups:[] };
+const DEFAULTS = { linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
+  gh:{ token:'', repo:'Jobacke/ZNA-Navi', path:'zna.json', branch:'main', auto:true } };
 let state = { items:[], settings:{...DEFAULTS} };
 function load(){
   try{
@@ -380,16 +410,26 @@ async function locate(silent){
   locating = false; render();
 }
 
-/* ---------- Waze ---------- */
+/* ---------- Navi-Apps ---------- */
+const APPS = { waze:'Waze', gmaps:'Google Maps', apple:'Apple Karten' };
+const isAndroid = /Android/i.test(navigator.userAgent);
+const curApp = () => APPS[state.settings.navApp] ? state.settings.navApp : 'waze';
 function linkMode(force){ let m = force || state.settings.linkMode; if(m === 'auto') m = isStandalone() ? 'scheme' : 'universal'; return m; }
-function wazeUrl(it, force){
-  const lat = (+it.lat).toFixed(6), lon = (+it.lon).toFixed(6);
-  return linkMode(force) === 'scheme'
-    ? `waze://?ll=${lat},${lon}&navigate=yes`
-    : `https://waze.com/ul?ll=${lat}%2C${lon}&navigate=yes&utm_source=zna-navi`;
+function navUrl(it, force, appOverride){
+  const lat = (+it.lat).toFixed(6), lon = (+it.lon).toFixed(6), app = appOverride || curApp();
+  // Google/Apple-Schemata gibt es auf Android nicht – dort immer Web-Link (öffnet die App)
+  const sch = linkMode(force) === 'scheme' && !(isAndroid && app !== 'waze');
+  if(app === 'gmaps') return sch ? `comgooglemaps://?daddr=${lat},${lon}&directionsmode=driving`
+    : `https://www.google.com/maps/dir/?api=1&destination=${lat}%2C${lon}&travelmode=driving&dir_action=navigate`;
+  if(app === 'apple') return sch ? `maps://?daddr=${lat},${lon}&dirflg=d` : `https://maps.apple.com/?daddr=${lat},${lon}&dirflg=d`;
+  return sch ? `waze://?ll=${lat},${lon}&navigate=yes` : `https://waze.com/ul?ll=${lat}%2C${lon}&navigate=yes&utm_source=zna-navi`;
 }
-function wazeSearchUrl(q){
-  return linkMode() === 'scheme' ? `waze://?q=${encodeURIComponent(q)}` : `https://waze.com/ul?q=${encodeURIComponent(q)}&utm_source=zna-navi`;
+function navSearchUrl(q){
+  const e = encodeURIComponent(q), app = curApp();
+  const sch = linkMode() === 'scheme' && !(isAndroid && app !== 'waze');
+  if(app === 'gmaps') return sch ? `comgooglemaps://?q=${e}` : `https://www.google.com/maps/search/?api=1&query=${e}`;
+  if(app === 'apple') return sch ? `maps://?q=${e}` : `https://maps.apple.com/?q=${e}`;
+  return sch ? `waze://?q=${e}` : `https://waze.com/ul?q=${e}&utm_source=zna-navi`;
 }
 
 /* ---------- Adresssuche ---------- */
@@ -476,6 +516,7 @@ function render(){
   const chips = gs.length > 1 ? [...gs, '__all'] : gs;
   $('#chips').innerHTML = chips.map(x => `<button class="chip${x===g?' on':''}" data-g="${esc(x)}">${x==='__all'?'Alle':esc(x)}</button>`).join('');
   $('#groupList').innerHTML = gs.map(x=>`<option value="${esc(x)}">`).join('');
+  document.querySelectorAll('#navSel button').forEach(b => b.classList.toggle('on', b.dataset.app === curApp()));
 
   const q = query.trim().toLowerCase();
   // Beim Suchen alle Gruppen durchsuchen
@@ -495,7 +536,7 @@ function render(){
   if(locating) status = 'Standort wird ermittelt …';
   else if(editing) status = 'Bearbeiten: Ziel antippen zum Ändern';
   else if(byDistance && pos) status = `Nach Entfernung (Luftlinie) · Standort ±${Math.round(pos.acc)} m`;
-  else if(state.items.length && !q) status = `${items.length} Ziel${items.length===1?'':'e'} · antippen = Waze startet`;
+  else if(state.items.length && !q) status = `${items.length} Ziel${items.length===1?'':'e'} · antippen = ${APPS[curApp()]} startet`;
   $('#status').textContent = status;
 
   const L = $('#list');
@@ -524,7 +565,7 @@ function render(){
         i.note ? `<span>${esc(i.note)}</span>` : '',
         q && (i.group||'ZNA') !== g ? `<span>${esc(i.group||'ZNA')}</span>` : ''
       ].filter(Boolean).join('');
-      const href = ok && !editing ? wazeUrl(i) : '#';
+      const href = ok && !editing ? navUrl(i) : '#';
       return `<a class="tile${top?' top':''}${ok?'':' missing'}" href="${esc(href)}" data-id="${esc(i.id)}">
         <div class="go">${editing||!ok ? ICON_PEN : ICON_ARROW}</div>
         <div class="txt"><div class="name">${esc(i.name)}</div><div class="sub">${sub}</div></div></a>`;
@@ -543,14 +584,14 @@ function render(){
       if(!addr.results.length && !addr.w3wOnly) html += `<div class="loading">Keine Adresse gefunden.</div>`;
       html += addr.results.map((r, idx) => {
         const d = pos ? `<span class="dist">${fmtDist(haversine(pos, r))}</span>` : '';
-        return `<a class="tile addr" href="${esc(wazeUrl(r))}" data-addr="${idx}">
+        return `<a class="tile addr" href="${esc(navUrl(r))}" data-addr="${idx}">
           <div class="go">${ICON_ARROW}</div>
           <div class="txt"><div class="name">${esc(r.label)}</div><div class="sub">${r.sub?`<span>${esc(r.sub)}</span>`:''}${d}</div></div>
           <span class="save" role="button" data-save="${idx}" aria-label="Als Ziel speichern" title="Als Ziel speichern">☆</span></a>`;
       }).join('');
     }
-    html += `<a class="tile waze" href="${esc(wazeSearchUrl(query.trim()))}">
-      <div class="go">${ICON_SEARCH}</div><div class="txt"><div class="name">In Waze suchen</div><div class="sub"><span>„${esc(query.trim())}“ – falls oben nicht dabei</span></div></div></a>`;
+    html += `<a class="tile waze" href="${esc(navSearchUrl(query.trim()))}">
+      <div class="go">${ICON_SEARCH}</div><div class="txt"><div class="name">In ${APPS[curApp()]} suchen</div><div class="sub"><span>„${esc(query.trim())}“ – falls oben nicht dabei</span></div></div></a>`;
   }else if(!items.length){
     html += `<div class="empty">Keine Treffer.</div>`;
   }
@@ -578,6 +619,10 @@ $('#list').addEventListener('click', e => {
   }
   // sonst: Adress- oder Waze-Kachel – echter Link öffnet Waze
   if(query.trim()) resetOnReturn = true;
+});
+$('#navSel').addEventListener('click', e => {
+  const b = e.target.closest('button[data-app]'); if(!b) return;
+  state.settings.navApp = b.dataset.app; save(); render();
 });
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
@@ -655,8 +700,11 @@ function openEditor(it, pre){
   $('#ovEdit').classList.add('show');
   if(!it && !pre) setTimeout(()=>$('#edName').focus(), 50);
 }
-function updSrvHint(){ $('#edSrvHint').hidden = !(state.settings.srvGroups||[]).includes($('#edGroup').value.trim() || 'ZNA'); }
-$('#edGroup').addEventListener('input', updSrvHint);
+function updSrvHint(){
+  $('#edSrvHint').textContent = ghOn()
+    ? (gh().auto !== false ? 'Wird nach dem Speichern automatisch auf den Server hochgeladen.' : 'Nach dem Speichern oben über „Hochladen“ auf den Server bringen.')
+    : 'Wird nur auf diesem Handy gespeichert, bis „Hochladen zum Server“ in den Einstellungen eingerichtet ist.';
+}
 function updW3wLink(){
   const w = parseW3W($('#edW3w').value, true);
   const a = $('#edOpenW3w');
@@ -687,8 +735,8 @@ $('#edHere').onclick = async () => {
 $('#edCopyLink').onclick = async () => {
   const c = parseCoords($('#edCoords').value);
   if(!c) return toast('Erst Koordinaten eintragen');
-  const url = wazeUrl({lat:c.lat, lon:c.lon}, 'universal');
-  try{ await navigator.clipboard.writeText(url); toast('Waze-Link kopiert'); }
+  const url = navUrl({lat:c.lat, lon:c.lon}, 'universal');
+  try{ await navigator.clipboard.writeText(url); toast(`${APPS[curApp()]}-Link kopiert`); }
   catch(e){ showText(url, 'Link markiert – bitte manuell kopieren'); }
 };
 function showText(text, msg){ closeAll(); openSettings(); const t = $('#expText'); t.hidden = false; t.value = text; t.scrollIntoView({block:'center'}); t.focus(); t.select(); toast(msg, 3000); }
@@ -707,12 +755,13 @@ $('#edSave').onclick = () => {
   if(state.settings.group !== '__all' && !edFromAddr) state.settings.group = data.group;
   save(); closeAll();
   if(query.trim()) clearSearch(); else render();
+  scheduleUpload();
   toast(!c ? 'Gespeichert – Koordinaten fehlen noch' : (edFromAddr ? `Gespeichert in Gruppe „${data.group}“` : 'Gespeichert'), 2500);
 };
 $('#edDelete').onclick = () => {
   if(!edItem) return;
   if(!delArmed){ delArmed = true; $('#edDelete').textContent = 'Wirklich löschen?'; return; }
-  state.items = state.items.filter(x => x !== edItem); save(); closeAll(); render(); toast('Gelöscht');
+  state.items = state.items.filter(x => x !== edItem); save(); closeAll(); render(); toast('Gelöscht'); scheduleUpload();
 };
 
 /* ---------- what3words API ---------- */
@@ -725,49 +774,110 @@ async function w3wToCoords(words){
   throw new Error('what3words: ' + (d?.error?.message || ('Fehler ' + (res && res.status))));
 }
 
-/* ---------- Serverliste ---------- */
+/* ---------- Serverliste & Abgleich ---------- */
+// Prinzip: "snap" = letzter gemeinsamer Stand mit dem Server. Daraus ergeben sich
+// eigene Änderungen (lokal vs. snap) und fremde Änderungen (Server vs. snap).
+// Beide werden zusammengeführt – nichts geht verloren.
 const keyOf = i => i.w3w ? 'w:' + i.w3w : (hasCoords(i) ? `c:${(+i.lat).toFixed(5)},${(+i.lon).toFixed(5)}` : 'n:' + i.name);
-const srvSig = srv => hash(JSON.stringify(srv.items.map(i => [i.name, i.group||'ZNA', i.w3w||'', i.lat, i.lon, i.note||''])));
+const clean = i => { const o = { name:String(i.name), group:i.group||'ZNA', w3w:i.w3w||'', lat:+i.lat, lon:+i.lon }; if(i.note) o.note = i.note; return o; };
+const itemSig = i => JSON.stringify([i.name, i.group||'ZNA', i.w3w||'', hasCoords(i) ? (+i.lat).toFixed(6) : '', hasCoords(i) ? (+i.lon).toFixed(6) : '', i.note||'']);
+const srvSig = srv => hash((srv.rev||0) + '|' + srv.items.map(itemSig).sort().join('\n'));
+function snapFrom(items, rev){ const m = {}; for(const i of items) m[keyOf(i)] = itemSig(i); return { rev: rev||0, items: m }; }
+function changesSince(cur, snapItems){
+  const curMap = new Map(cur.map(i => [keyOf(i), i]));
+  const upd = [], del = []; let add = 0, chg = 0;
+  for(const [k, i] of curMap){
+    const sg = snapItems[k];
+    if(sg === undefined){ upd.push(i); add++; }
+    else if(sg !== itemSig(i)){ upd.push(i); chg++; }
+  }
+  for(const k of Object.keys(snapItems)) if(!curMap.has(k)) del.push(k);
+  return { upd, del, add, chg, n: upd.length + del.length };
+}
+function mergeInto(target, ch, skipKeys){
+  const m = new Map(target.map(i => [keyOf(i), i]));
+  for(const k of ch.del) if(!(skipKeys && skipKeys.has(k))) m.delete(k);
+  for(const i of ch.upd){
+    const k = keyOf(i); if(skipKeys && skipKeys.has(k)) continue;
+    m.set(k, { ...(m.get(k)||{}), ...clean(i) });
+  }
+  return [...m.values()].map(clean);
+}
+function localChanges(){
+  return state.settings.snap ? changesSince(state.items, state.settings.snap.items) : { upd:[], del:[], add:0, chg:0, n:0 };
+}
+function adoptItems(list){
+  // Neue Liste übernehmen, IDs und Nutzungszähler bleiben erhalten
+  const byKey = new Map(state.items.map(i => [keyOf(i), i]));
+  state.items = list.map(f => { const l = byKey.get(keyOf(f)); return { id:l?.id || uid(), uses:l?.uses || 0, lastUsed:l?.lastUsed, ...clean(f) }; });
+  if(state.settings.group !== '__all' && !state.items.some(i => (i.group||'ZNA') === state.settings.group)) state.settings.group = state.items[0]?.group || 'ZNA';
+}
+function parseList(d){
+  const items = (d.items||[]).filter(x => x && x.name && (x.w3w || hasCoords(x))).map(clean);
+  return { updated: d.updated || '', rev: +d.rev || 0, items };
+}
+function serialize(items, rev){
+  const list = items.map(clean).sort((a,b) => a.group.localeCompare(b.group,'de') || a.name.localeCompare(b.name,'de'));
+  return '{\n  "app": "zna-navi",\n  "v": 1,\n  "rev": ' + (rev||0) + ',\n  "updated": "' + new Date().toISOString().slice(0,10) + '",\n  "items": [\n' +
+    list.map(x => '    ' + JSON.stringify(x)).join(',\n') + '\n  ]\n}\n';
+}
+
+/* GitHub (nur mit Schlüssel) */
+const gh = () => ({ ...DEFAULTS.gh, ...(state.settings.gh || {}) });
+const ghOn = () => !!(gh().token && gh().repo);
+function b64enc(str){ const b = new TextEncoder().encode(str); let s = ''; for(let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+function b64dec(b64){ const bin = atob(String(b64).replace(/\s/g,'')); const u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
+async function ghReq(method, body){
+  const g = gh();
+  const url = `https://api.github.com/repos/${g.repo}/contents/${g.path}` + (method === 'GET' ? `?ref=${encodeURIComponent(g.branch)}&t=${Date.now()}` : '');
+  const headers = { 'Authorization':'Bearer ' + g.token, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
+  if(body) headers['Content-Type'] = 'application/json';
+  let r;
+  try{ r = await fetch(url, { method, cache:'no-store', headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch(e){ throw new Error('GitHub nicht erreichbar'); }
+  if(r.status === 401) throw new Error('GitHub-Schlüssel ungültig oder abgelaufen');
+  if(r.status === 403) throw new Error('GitHub-Schlüssel hat keine Schreibrechte (Contents: Read and write)');
+  if(r.status === 404) throw new Error('Repo oder zna.json nicht gefunden – ist der Schlüssel für dieses Repo freigegeben?');
+  if(r.status === 409 || r.status === 422){ const e = new Error('Konflikt beim Speichern'); e.conflict = true; throw e; }
+  if(!r.ok) throw new Error('GitHub-Fehler ' + r.status);
+  return r.json();
+}
+async function ghGet(){
+  const d = await ghReq('GET');
+  let j; try{ j = JSON.parse(b64dec(d.content || '')); }catch(e){ throw new Error('zna.json auf GitHub ist fehlerhaft'); }
+  return { sha: d.sha, ...parseList(j) };
+}
+
 async function fetchServer(){
+  if(ghOn()){ try{ return await ghGet(); }catch(e){ /* sonst öffentliche Kopie */ } }
   let r;
   try{ r = await fetch('zna.json?t=' + Date.now(), { cache:'no-store' }); }
   catch(e){ throw new Error('Server nicht erreichbar'); }
   if(!r.ok) throw new Error('Serverliste nicht gefunden');
   let d; try{ d = await r.json(); }catch(e){ throw new Error('Serverliste ist fehlerhaft (JSON prüfen)'); }
-  const items = (d.items||[]).filter(x => x && x.name && (x.w3w || hasCoords(x)))
-    .map(x => ({ name:String(x.name), group:x.group||'ZNA', w3w:x.w3w||'', lat:x.lat, lon:x.lon, note:x.note||'' }));
-  if(!items.length) throw new Error('Serverliste ist leer');
-  return { updated: d.updated || '', items };
-}
-function diffServer(srv){
-  const groupsSrv = new Set(srv.items.map(i => i.group));
-  const lmap = new Map(state.items.filter(i => groupsSrv.has(i.group||'ZNA')).map(i => [keyOf(i), i]));
-  const smap = new Map(srv.items.map(i => [keyOf(i), i]));
-  let add = 0, chg = 0, del = 0;
-  for(const [k, s] of smap){
-    const l = lmap.get(k);
-    if(!l) add++;
-    else if(l.name !== s.name || (l.note||'') !== s.note || !hasCoords(l) || Math.abs(l.lat-s.lat) > 1e-6 || Math.abs(l.lon-s.lon) > 1e-6) chg++;
-  }
-  for(const k of lmap.keys()) if(!smap.has(k)) del++;
-  return { add, chg, del, groups:[...groupsSrv] };
+  const srv = parseList(d);
+  if(!srv.items.length) throw new Error('Serverliste ist leer');
+  return srv;
 }
 function applyServer(srv){
-  const groupsSrv = new Set(srv.items.map(i => i.group));
-  const old = new Map(state.items.filter(i => groupsSrv.has(i.group||'ZNA')).map(i => [keyOf(i), i]));
-  const keep = state.items.filter(i => !groupsSrv.has(i.group||'ZNA'));
-  const fresh = srv.items.map(s => { const o = old.get(keyOf(s)); return { id:o?.id || uid(), uses:o?.uses || 0, lastUsed:o?.lastUsed, ...s }; });
-  state.items = keep.concat(fresh);
+  const snap = state.settings.snap;
+  if(!snap || !state.items.length) adoptItems(srv.items);
+  else{
+    const srvCh = changesSince(srv.items, snap.items);
+    const locCh = changesSince(state.items, snap.items);
+    const mine = new Set([...locCh.upd.map(keyOf), ...locCh.del]);
+    adoptItems(mergeInto(state.items, srvCh, mine)); // eigene, noch nicht hochgeladene Änderungen bleiben
+  }
+  state.settings.snap = snapFrom(srv.items, srv.rev);
   state.settings.serverSeen = srvSig(srv);
-  state.settings.srvGroups = [...groupsSrv];
-  if(!state.items.some(i => (i.group||'ZNA') === state.settings.group)) state.settings.group = fresh[0]?.group || 'ZNA';
-  save(); hideBanner(); render();
+  save(); hideBanner(); render(); updSync();
 }
 function hideBanner(){ $('#srvBanner').hidden = true; }
 function showBanner(srv, d){
   const b = $('#srvBanner');
   const parts = [d.add && `${d.add} neu`, d.chg && `${d.chg} geändert`, d.del && `${d.del} entfernt`].filter(Boolean).join(' · ');
-  b.innerHTML = `<b>Neue Serverliste${srv.updated ? ' vom ' + esc(srv.updated) : ''}:</b> ${esc(parts)}
+  const mine = localChanges().n;
+  b.innerHTML = `<b>Neue Serverliste${srv.updated ? ' vom ' + esc(srv.updated) : ''}:</b> ${esc(parts)}${mine ? '<br>Deine eigenen, noch nicht hochgeladenen Änderungen bleiben erhalten.' : ''}
     <div class="row"><button class="btn small ok" id="srvApply">Übernehmen</button><button class="btn small" id="srvIgnore">Ignorieren</button></div>`;
   b.hidden = false;
   $('#srvApply').onclick = () => { applyServer(srv); toast('Liste aktualisiert'); };
@@ -777,15 +887,74 @@ async function checkServer(manual){
   let srv;
   try{ srv = await fetchServer(); }
   catch(e){ if(manual) toast(e.message, 3500); return; }
-  $('#srvInfo').textContent = `Serverliste: ${srv.items.length} Ziele${srv.updated ? ', Stand ' + srv.updated : ''}`;
+  $('#srvInfo').textContent = `Serverliste: ${srv.items.length} Ziele${srv.updated ? ', Stand ' + srv.updated : ''}${srv.rev ? ' · Rev. ' + srv.rev : ''}`;
   if(!state.items.length){ applyServer(srv); toast(`${srv.items.length} Ziele vom Server geladen`); return; }
-  const d = diffServer(srv);
-  if(!d.add && !d.chg && !d.del){
-    state.settings.serverSeen = srvSig(srv); state.settings.srvGroups = d.groups; save(); hideBanner();
-    if(manual) toast('Liste ist aktuell'); return;
+  const snap = state.settings.snap;
+  if(!snap){
+    // Erster Abgleich: Serverstand als gemeinsame Basis merken
+    state.settings.snap = snapFrom(srv.items, srv.rev); state.settings.serverSeen = srvSig(srv); save(); updSync();
+    if(manual) toast('Abgleich eingerichtet'); return;
   }
+  if(srv.rev < (snap.rev || 0)){ if(manual) toast('Der Server liefert noch den älteren Stand – gleich nochmal versuchen', 3500); return; }
+  const d = changesSince(srv.items, snap.items);
+  if(!d.n){ hideBanner(); if(manual) toast('Liste ist aktuell'); return; }
   if(!manual && state.settings.serverSeen === srvSig(srv)) return; // bewusst ignoriert
-  closeAll(); showBanner(srv, d); window.scrollTo({top:0, behavior:'smooth'});
+  closeAll(); showBanner(srv, { add:d.add, chg:d.chg, del:d.del.length }); window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+/* Hochladen */
+let upTimer = null, uploading = false, syncLater = false;
+function scheduleUpload(){
+  updSync();
+  if(!ghOn() || gh().auto === false) return;
+  clearTimeout(upTimer); upTimer = setTimeout(() => upload(true), 1500);
+}
+async function upload(silent){
+  if(!ghOn()){
+    if(!silent){ openSettings(); setTimeout(() => $('#ghToken').scrollIntoView({ block:'center' }), 60); toast('Erst den GitHub-Schlüssel eintragen', 3000); }
+    return;
+  }
+  if(uploading) return;
+  uploading = true; updSync();
+  try{
+    for(let attempt = 0; attempt < 3; attempt++){
+      const remote = await ghGet();
+      const snap = state.settings.snap || snapFrom(remote.items, remote.rev);
+      const locCh = changesSince(state.items, snap.items);
+      const finalItems = mergeInto(remote.items, locCh);
+      const unchanged = changesSince(remote.items, snapFrom(finalItems).items).n === 0;
+      let rev = remote.rev;
+      if(!unchanged){
+        rev = Math.max(remote.rev, snap.rev || 0) + 1;
+        const msg = `ZNA-Navi: ${[locCh.add && locCh.add + ' neu', locCh.chg && locCh.chg + ' geändert', locCh.del.length && locCh.del.length + ' gelöscht'].filter(Boolean).join(', ') || 'Abgleich'}`;
+        try{ await ghReq('PUT', { message: msg, content: b64enc(serialize(finalItems, rev)), sha: remote.sha, branch: gh().branch }); }
+        catch(e){ if(e.conflict && attempt < 2) continue; throw e; } // jemand war schneller: neu laden und nochmal
+      }
+      adoptItems(finalItems);
+      state.settings.snap = snapFrom(finalItems, rev);
+      state.settings.serverSeen = srvSig({ rev, items: finalItems });
+      save(); hideBanner(); render();
+      if(!silent || !unchanged) toast(unchanged ? 'Server ist bereits aktuell' : 'Auf den Server hochgeladen ✓');
+      break;
+    }
+  }catch(e){ toast('Hochladen fehlgeschlagen: ' + e.message, 5000); }
+  uploading = false; updSync();
+}
+function updSync(){
+  const b = $('#syncBar'); if(!b) return;
+  const ch = localChanges();
+  if(!ch.n || (syncLater && !ghOn())){ b.hidden = true; return; }
+  const parts = [ch.add && `${ch.add} neu`, ch.chg && `${ch.chg} geändert`, ch.del.length && `${ch.del.length} gelöscht`].filter(Boolean).join(' · ');
+  if(ghOn()){
+    b.innerHTML = uploading ? '<b>Wird hochgeladen …</b>'
+      : `<b>Noch nicht auf dem Server:</b> ${parts}<div class="row"><button class="btn small ok" id="syncUp">Jetzt hochladen</button></div>`;
+  }else{
+    b.innerHTML = `<b>Nur auf diesem Handy:</b> ${parts}<div class="row"><button class="btn small" id="syncSetup">Hochladen einrichten</button><button class="btn small" id="syncLater">Später</button></div>`;
+  }
+  b.hidden = false;
+  const u = $('#syncUp'); if(u) u.onclick = () => upload(false);
+  const st = $('#syncSetup'); if(st) st.onclick = () => { openSettings(); setTimeout(() => $('#ghToken').scrollIntoView({ block:'center' }), 60); };
+  const l = $('#syncLater'); if(l) l.onclick = () => { syncLater = true; updSync(); };
 }
 
 /* ---------- Einstellungen ---------- */
@@ -795,6 +964,9 @@ function openSettings(){
   $('#setAutoNear').checked = !!state.settings.autoNear;
   $('#setAutoSrv').checked = !!state.settings.autoSrv;
   $('#setKey').value = state.settings.w3wKey || '';
+  $('#ghToken').value = gh().token || '';
+  $('#ghRepo').value = gh().repo || '';
+  $('#ghAuto').checked = gh().auto !== false;
   if(state.settings.group && state.settings.group !== '__all') $('#impGroup').value = state.settings.group;
   $('#ovSet').classList.add('show');
 }
@@ -804,6 +976,18 @@ $('#setAutoNear').onchange = e => { state.settings.autoNear = e.target.checked; 
 $('#setAutoSrv').onchange = e => { state.settings.autoSrv = e.target.checked; save(); };
 $('#setKey').onchange = e => { state.settings.w3wKey = e.target.value.trim(); save(); };
 $('#srvLoad').onclick = () => checkServer(true);
+const setGh = patch => { state.settings.gh = { ...gh(), ...patch }; save(); updSync(); };
+$('#ghToken').onchange = e => setGh({ token: e.target.value.trim() });
+$('#ghRepo').onchange = e => setGh({ repo: e.target.value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'') || DEFAULTS.gh.repo });
+$('#ghAuto').onchange = e => setGh({ auto: e.target.checked });
+$('#ghTest').onclick = async () => {
+  setGh({ token: $('#ghToken').value.trim() });
+  if(!ghOn()) return toast('Erst den Schlüssel einfügen');
+  $('#ghInfo').textContent = 'Teste …';
+  try{ const r = await ghGet(); $('#ghInfo').textContent = `Verbunden ✓ – ${r.items.length} Ziele auf dem Server (Rev. ${r.rev})`; }
+  catch(e){ $('#ghInfo').textContent = '✗ ' + e.message; }
+};
+$('#ghUp').onclick = () => { setGh({ token: $('#ghToken').value.trim() }); closeAll(); upload(false); };
 
 /* Import */
 let pending = [];
@@ -842,18 +1026,11 @@ $('#impDo').onclick = () => {
   pending = []; $('#impOut').innerHTML = ''; $('#impText').value = ''; $('#impDo').disabled = true;
   save(); closeAll(); render();
   toast(`${added} neu, ${upd} aktualisiert`);
+  scheduleUpload();
 };
 
 /* Export (= Format von zna.json) */
-function exportText(){
-  const items = state.items.map(i => {
-    const o = { name:i.name, group:i.group||'ZNA', w3w:i.w3w||'', lat:i.lat, lon:i.lon };
-    if(i.note) o.note = i.note;
-    return o;
-  }).sort((a,b) => a.group.localeCompare(b.group,'de') || a.name.localeCompare(b.name,'de'));
-  return '{\n  "app": "zna-navi",\n  "v": 1,\n  "updated": "' + new Date().toISOString().slice(0,10) + '",\n  "items": [\n' +
-    items.map(x => '    ' + JSON.stringify(x)).join(',\n') + '\n  ]\n}\n';
-}
+function exportText(){ return serialize(state.items, state.settings.snap?.rev || 0); }
 $('#expCopy').onclick = async () => {
   try{ await navigator.clipboard.writeText(exportText()); toast('Export kopiert'); }
   catch(e){ showText(exportText(), 'Bitte manuell kopieren'); }
@@ -894,6 +1071,7 @@ try{ new ResizeObserver(fitHeader).observe($('header')); }catch(e){ window.addEv
 load();
 showVersion();
 fitHeader();
+updSync();
 checkAppVersion();
 if(!canStore) $('#storageWarn').hidden = false;
 const qp = new URLSearchParams(location.search).get('q');
@@ -920,7 +1098,7 @@ if('serviceWorker' in navigator && location.protocol === 'https:'){
   try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
 }
 
-window.__zna = { parseImport, parseCoords, parseW3W, wazeUrl, geocode, diffServer, exportText, state: () => state };
+window.__zna = { parseImport, parseCoords, parseW3W, navUrl, geocode, exportText, changesSince, upload, checkServer, localChanges, state: () => state };
 })();
 </script>
 </body>
