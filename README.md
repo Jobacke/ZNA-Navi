@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.6.3 | 2026-11-12 | Responsive für schmale Displays/Display-Zoom, kein seitliches Überstehen |
 | 1.6.2 | 2026-11-12 | Einstellung „Abstand oben“: Automatisch / Extra |
 | 1.6.1 | 2026-11-12 | Layout: Kopf steht fest, nur die Liste scrollt (keine Überlappung); Statusleiste deckend; Standort bei jedem Start/Rückkehr |
 | 1.6.0 | 2026-11-12 | Knopf „Fahrt beenden“ (Kurzbefehl „Blitzer Ruhe“ → Ruhemodus) |

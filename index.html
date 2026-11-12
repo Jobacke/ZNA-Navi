@@ -24,33 +24,36 @@
   html,body{margin:0;background:var(--bg);color:var(--text);
     font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
   /* Layout: Kopf steht fest, nur die Liste darunter scrollt – keine Überlappung möglich */
-  html,body{height:100%}
+  html,body{height:100%;width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
   body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left)}
-  #scroller{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(env(safe-area-inset-bottom) + 90px)}
+  #scroller{flex:1 1 auto;min-height:0;min-width:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(env(safe-area-inset-bottom) + 90px)}
   button,input,select,textarea{font:inherit;color:inherit}
   a{color:var(--blue)}
 
   /* Kopfzeile fest oben – inkl. Abstand für Uhrzeit/Dynamic Island */
   :root{--sat:env(safe-area-inset-top)}
   header{position:relative;flex:none;z-index:10;background:var(--bg);
-    padding:calc(var(--sat) + 10px) 14px 10px 14px;border-bottom:1px solid var(--line)}
-  .bar{display:flex;align-items:center;gap:10px}
-  .logo{width:40px;height:40px;border-radius:10px;flex:none;display:block;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-  h1{font-size:21px;margin:0;flex:1;letter-spacing:.2px;line-height:1.1}
+    padding:calc(var(--sat) + 10px) clamp(10px,3.5vw,14px) 10px;border-bottom:1px solid var(--line);min-width:0;max-width:100%}
+  .bar{display:flex;align-items:center;gap:clamp(6px,2.4vw,10px);min-width:0}
+  .bar > *{min-width:0}
+  .logo{width:clamp(32px,10vw,40px);height:clamp(32px,10vw,40px);border-radius:10px;flex:none;display:block;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  h1{font-size:clamp(17px,5.4vw,21px);margin:0;flex:1 1 auto;min-width:0;letter-spacing:.2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   h1 .ver{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.3px;margin-top:2px}
-  .iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;flex:none}
+  .iconbtn{width:clamp(38px,11.5vw,44px);height:clamp(38px,11.5vw,44px);border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;flex:none}
   .iconbtn.on{background:var(--accent);border-color:var(--accent)}
   .iconbtn svg{width:22px;height:22px}
 
-  .chips{display:flex;gap:8px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+  .chips{display:flex;gap:8px;overflow-x:auto;min-width:0;margin-top:10px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;font-weight:600;font-size:15px}
   .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
-  .searchwrap{display:flex;gap:8px;margin-top:10px}
+  .searchwrap{display:flex;gap:8px;margin-top:10px;min-width:0}
   .search{flex:1;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);outline:none}
   .search:focus{border-color:var(--blue)}
-  .navsel{display:flex;margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
-  .navsel button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px 4px;border-radius:9px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+  .navsel{display:flex;min-width:0;margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+  .navsel button{flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--muted);padding:7px 2px;border-radius:9px;font-weight:700;font-size:clamp(12px,3.7vw,14px);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .navsel .sm{display:none}
+  @media (max-width:370px){ .navsel .lg{display:none} .navsel .sm{display:inline} .navsel button .op{margin-left:3px} }
   .navsel button.on{background:var(--text);color:var(--bg)}
   .navsel button .op{display:none;margin-left:5px;font-size:13px}
   .navsel button.on .op{display:inline}
@@ -62,15 +65,15 @@
   .banner.info{background:#0f2c4a;color:#bfe3ff}
   .banner .row{margin-top:8px}
 
-  main{padding:8px 14px;display:grid;gap:10px}
+  main{padding:8px clamp(10px,3.5vw,14px);min-width:0;display:grid;gap:10px}
   .sec{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.6px;margin:10px 2px 0}
-  .tile{display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);
+  .tile{display:flex;align-items:center;gap:clamp(10px,3.5vw,14px);padding:clamp(12px,4vw,16px);min-width:0;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);
     text-decoration:none;color:var(--text);min-height:76px;cursor:pointer;position:relative;user-select:none;-webkit-user-select:none}
   .tile:active{transform:scale(.985);background:var(--panel2)}
   .tile .go{flex:none;width:46px;height:46px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
   .tile .go svg{width:24px;height:24px}
   .tile .txt{flex:1;min-width:0}
-  .tile .name{font-size:19px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+  .tile .name{font-size:clamp(16px,5vw,19px);font-weight:700;line-height:1.2;overflow-wrap:anywhere}
   .tile .sub{color:var(--muted);font-size:14px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
   .tile .w3w{color:#ff7a85}
   .tile .dist{color:var(--ok);font-weight:600}
@@ -159,7 +162,7 @@
     </button>
   </form>
   <div class="navsel" id="navSel" aria-label="Navigations-App">
-    <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps">Google Maps<span class="op">↗</span></button><button type="button" data-app="apple">Apple Karten<span class="op">↗</span></button>
+    <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps"><span class="lg">Google Maps</span><span class="sm">Google</span><span class="op">↗</span></button><button type="button" data-app="apple"><span class="lg">Apple Karten</span><span class="sm">Apple</span><span class="op">↗</span></button>
   </div>
 </header>
 <div id="scroller">
@@ -345,7 +348,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.6.3';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
