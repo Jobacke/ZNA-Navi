@@ -1,10 +1,11 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 3,
+  "rev": 4,
   "updated": "2026-11-12",
   "items": [
     {"name":"Augustinum","group":"ZNA","w3w":"kurve.trinken.exzellentes","lat":48.122049,"lon":11.487464},
+    {"name":"B 33","group":"ZNA","w3w":"baumhaus.ölig.verbunden","lat":48.09992,"lon":11.537,"note":"Moppeds JUH"},
     {"name":"Barmherzige Brüder","group":"ZNA","w3w":"offenen.nachbau.lesbar","lat":48.155846,"lon":11.510649},
     {"name":"Bogenhausen","group":"ZNA","w3w":"vorweisen.gelangen.stroh","lat":48.154579,"lon":11.624333},
     {"name":"DHZ","group":"ZNA","w3w":"erringen.weicher.duften","lat":48.152288,"lon":11.548759},
