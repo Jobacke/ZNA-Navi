@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.3.1 | 2026-11-12 | Kopfzeile bleibt beim Scrollen fest oben (auch unter Uhrzeit/Dynamic Island) |
 | 1.3.0 | 2026-11-12 | „Zurück zur Liste“ bei Adresssuche; nach Speichern und nach Rückkehr aus Waze automatisch zur Liste; gespeicherte Adressen landen in Gruppe „Eigene“ |
 | 1.2.1 | 2026-11-12 | Updates kommen sofort an (Cache-Prüfung im Service Worker) |
 | 1.2.0 | 2026-11-12 | Versionsnummer in der App, Update-Hinweis bei neuer Version |

@@ -22,12 +22,15 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--text);
     font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
-  body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 90px) env(safe-area-inset-left);min-height:100vh}
+  body{padding:0 env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 90px) env(safe-area-inset-left);min-height:100vh}
   button,input,select,textarea{font:inherit;color:inherit}
   a{color:var(--blue)}
 
-  header{position:sticky;top:0;z-index:5;background:rgba(11,16,32,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+  /* Kopfzeile fest oben – inkl. Abstand für Uhrzeit/Dynamic Island */
+  header{position:fixed;top:0;left:0;right:0;z-index:10;background:rgba(11,16,32,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    padding:calc(env(safe-area-inset-top) + 10px) calc(14px + env(safe-area-inset-right)) 10px calc(14px + env(safe-area-inset-left));border-bottom:1px solid var(--line);
+    transform:translateZ(0)}
+  #hdrSpace{height:calc(env(safe-area-inset-top) + 178px)}
   .bar{display:flex;align-items:center;gap:10px}
   .logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
   h1{font-size:21px;margin:0;flex:1;letter-spacing:.2px;line-height:1.1}
@@ -145,6 +148,7 @@
     </button>
   </form>
 </header>
+<div id="hdrSpace" aria-hidden="true"></div>
 
 <div id="storageWarn" class="banner" hidden>Dieser Browser erlaubt hier kein dauerhaftes Speichern. Änderungen gehen beim Schließen verloren.</div>
 <div id="srvBanner" class="banner info" hidden></div>
@@ -265,7 +269,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -882,9 +886,14 @@ async function checkAppVersion(){
   }catch(e){}
 }
 
+/* ---------- Kopfzeile ---------- */
+function fitHeader(){ $('#hdrSpace').style.height = $('header').getBoundingClientRect().height + 'px'; }
+try{ new ResizeObserver(fitHeader).observe($('header')); }catch(e){ window.addEventListener('resize', fitHeader); }
+
 /* ---------- Start ---------- */
 load();
 showVersion();
+fitHeader();
 checkAppVersion();
 if(!canStore) $('#storageWarn').hidden = false;
 const qp = new URLSearchParams(location.search).get('q');
