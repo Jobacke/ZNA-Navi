@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.2.1 | 2026-11-12 | Updates kommen sofort an (Cache-Prüfung im Service Worker) |
 | 1.2.0 | 2026-11-12 | Versionsnummer in der App, Update-Hinweis bei neuer Version |
 | 1.1.0 | 2026-11-12 | Serverliste `zna.json`, Adresssuche mit Sprache, Siri-Parameter `?q=` |
 | 1.0.0 | 2026-11-12 | Erste Version: Ziele, Import aus what3words, Waze-Start, Entfernung |

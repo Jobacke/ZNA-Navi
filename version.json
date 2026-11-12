@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "date": "2026-11-12",
-  "notes": "Versionsnummer in der App, Update-Hinweis"
+  "notes": "Updates kommen sofort an (kein 10-Minuten-Cache mehr)"
 }
