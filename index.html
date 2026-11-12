@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0b1020">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="ZNA-Navi">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon-np.png">
@@ -23,15 +23,17 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--text);
     font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
-  body{padding:0 env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 90px) env(safe-area-inset-left);min-height:100vh}
+  /* Layout: Kopf steht fest, nur die Liste darunter scrollt – keine Überlappung möglich */
+  html,body{height:100%}
+  body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+  #scroller{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(env(safe-area-inset-bottom) + 90px)}
   button,input,select,textarea{font:inherit;color:inherit}
   a{color:var(--blue)}
 
   /* Kopfzeile fest oben – inkl. Abstand für Uhrzeit/Dynamic Island */
-  header{position:fixed;top:0;left:0;right:0;z-index:10;background:rgba(11,16,32,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    padding:calc(env(safe-area-inset-top) + 10px) calc(14px + env(safe-area-inset-right)) 10px calc(14px + env(safe-area-inset-left));border-bottom:1px solid var(--line);
-    transform:translateZ(0)}
-  #hdrSpace{height:calc(env(safe-area-inset-top) + 178px)}
+  :root{--sat:env(safe-area-inset-top)}
+  header{position:relative;flex:none;z-index:10;background:var(--bg);
+    padding:calc(var(--sat) + 10px) 14px 10px 14px;border-bottom:1px solid var(--line)}
   .bar{display:flex;align-items:center;gap:10px}
   .logo{width:40px;height:40px;border-radius:10px;flex:none;display:block;box-shadow:0 2px 8px rgba(0,0,0,.4)}
   h1{font-size:21px;margin:0;flex:1;letter-spacing:.2px;line-height:1.1}
@@ -160,15 +162,17 @@
     <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps">Google Maps<span class="op">↗</span></button><button type="button" data-app="apple">Apple Karten<span class="op">↗</span></button>
   </div>
 </header>
-<div id="hdrSpace" aria-hidden="true"></div>
+<div id="scroller">
 
 <div id="storageWarn" class="banner" hidden>Dieser Browser erlaubt hier kein dauerhaftes Speichern. Änderungen gehen beim Schließen verloren.</div>
 <div id="srvBanner" class="banner info" hidden></div>
 <div id="appBanner" class="banner info" hidden></div>
 <div id="syncBar" class="banner" hidden></div>
 <div id="blzBar" class="banner info" hidden></div>
+<div id="locBanner" class="banner" hidden></div>
 <div class="status" id="status"></div>
 <main id="list"></main>
+</div>
 
 <button class="fab" id="fab">+ Ziel</button>
 <a class="endbtn" id="endBtn" href="#" hidden><svg viewBox="0 0 24 24" fill="none" stroke="#ff5470" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>Fahrt beenden</a>
@@ -285,7 +289,7 @@
       <option value="usage">Meistgenutzt zuerst</option>
       <option value="name">Alphabetisch</option>
     </select>
-    <label class="check"><input type="checkbox" id="setAutoNear"> Beim Öffnen automatisch nach Entfernung sortieren</label>
+    <div class="hint">Der Standort wird bei jedem Öffnen ermittelt – das nächste Ziel steht oben. Ein Tipp auf das Fadenkreuz schaltet vorübergehend auf die hier gewählte Sortierung um.</div>
 
     <h3>Adresse per Siri</h3>
     <div class="help">
@@ -334,7 +338,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -441,8 +445,17 @@ function getPos(){
 let byDistance = false, locating = false;
 async function locate(silent){
   $('#btnNearest').classList.add('on'); locating = true; render();
-  try{ pos = await getPos(); byDistance = true; }
-  catch(e){ byDistance = false; $('#btnNearest').classList.remove('on'); if(!silent) toast(e.message); }
+  try{ pos = await getPos(); byDistance = true; $('#locBanner').hidden = true; }
+  catch(e){
+    byDistance = false; $('#btnNearest').classList.remove('on');
+    if(!silent) toast(e.message);
+    const b = $('#locBanner');
+    b.innerHTML = e.message === 'Standortzugriff verweigert'
+      ? '<b>Standort ist aus.</b> Einschalten: iPhone-Einstellungen → Datenschutz & Sicherheit → Ortungsdienste → <b>Safari-Websites</b> → „Beim Verwenden der App“. Danach ZNA-Navi neu öffnen.<div class="row"><button class="btn small" id="locRetry">Nochmal versuchen</button></div>'
+      : '<b>Standort gerade nicht verfügbar.</b><div class="row"><button class="btn small" id="locRetry">Nochmal versuchen</button></div>';
+    b.hidden = false;
+    $('#locRetry').onclick = () => locate(false);
+  }
   locating = false; render();
 }
 
@@ -644,7 +657,7 @@ function render(){
 function clearSearch(){
   query = ''; $('#search').value = ''; resetOnReturn = false;
   if(rec){ try{ rec.stop(); }catch(e){} }
-  scheduleAddr(); render(); window.scrollTo({ top:0 });
+  scheduleAddr(); render(); $('#scroller').scrollTo({ top:0 });
 }
 let resetOnReturn = false;
 
@@ -950,7 +963,7 @@ async function checkServer(manual){
   const d = changesSince(srv.items, snap.items);
   if(!d.n){ hideBanner(); if(manual) toast('Liste ist aktuell'); return; }
   if(!manual && state.settings.serverSeen === srvSig(srv)) return; // bewusst ignoriert
-  closeAll(); showBanner(srv, { add:d.add, chg:d.chg, del:d.del.length }); window.scrollTo({ top:0, behavior:'smooth' });
+  closeAll(); showBanner(srv, { add:d.add, chg:d.chg, del:d.del.length }); $('#scroller').scrollTo({ top:0, behavior:'smooth' });
 }
 
 /* Hochladen */
@@ -1012,7 +1025,6 @@ function updSync(){
 function openSettings(){
   $('#setLink').value = state.settings.linkMode;
   $('#setSort').value = state.settings.sort;
-  $('#setAutoNear').checked = !!state.settings.autoNear;
   $('#setAutoSrv').checked = !!state.settings.autoSrv;
   $('#setKey').value = state.settings.w3wKey || '';
   $('#ghToken').value = gh().token || '';
@@ -1029,7 +1041,6 @@ function openSettings(){
 }
 $('#setLink').onchange = e => { state.settings.linkMode = e.target.value; save(); render(); };
 $('#setSort').onchange = e => { state.settings.sort = e.target.value; save(); render(); };
-$('#setAutoNear').onchange = e => { state.settings.autoNear = e.target.checked; save(); };
 $('#setAutoSrv').onchange = e => { state.settings.autoSrv = e.target.checked; save(); };
 $('#setKey').onchange = e => { state.settings.w3wKey = e.target.value.trim(); save(); };
 $('#srvLoad').onclick = () => checkServer(true);
@@ -1169,8 +1180,19 @@ function blzStateText(){
 }
 
 /* ---------- Kopfzeile ---------- */
-function fitHeader(){ $('#hdrSpace').style.height = $('header').getBoundingClientRect().height + 'px'; }
-try{ new ResizeObserver(fitHeader).observe($('header')); }catch(e){ window.addEventListener('resize', fitHeader); }
+// Manche iPhones melden im Vollbild keinen Abstand zur Statusleiste – dann selbst einen setzen
+function fitHeader(){
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
+  document.body.appendChild(probe);
+  const envTop = probe.getBoundingClientRect().height; probe.remove();
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const underBar = isStandalone() && ios && envTop < 1 && Math.abs(window.innerHeight - screen.height) < 2;
+  document.documentElement.style.setProperty('--sat', underBar ? '50px' : 'env(safe-area-inset-top)');
+}
+window.addEventListener('resize', fitHeader);
+window.addEventListener('orientationchange', () => setTimeout(fitHeader, 300));
+setTimeout(fitHeader, 500);
 
 /* ---------- Start ---------- */
 load();
@@ -1189,16 +1211,12 @@ if(qp){
 scheduleAddr();
 render();
 if(state.settings.autoSrv || !state.items.length) checkServer(false);
-if(state.settings.autoNear && state.items.length) locate(true);
-else if(qp && navigator.permissions){
-  // Für die Adresssuche Entfernungen anzeigen, wenn Standort schon erlaubt ist
-  navigator.permissions.query({name:'geolocation'}).then(p => { if(p.state === 'granted') getPos().then(p2 => { pos = p2; render(); }).catch(()=>{}); }).catch(()=>{});
-}
+locate(true); // Standort immer beim Start
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState !== 'visible'){ state.settings.lastUse = Date.now(); save(); return; }
   if(resetOnReturn) clearSearch();
   touchUse();
-  if(byDistance) locate(true);
+  locate(true); // Standort bei jeder Rückkehr aktualisieren
   if(state.settings.autoSrv) checkServer(false);
   checkAppVersion();
 });

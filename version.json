@@ -1,5 +1,5 @@
 {
-  "version": "1.6.0",
+  "version": "1.6.1",
   "date": "2026-11-12",
-  "notes": "Knopf „Fahrt beenden“: schickt Blitzer.de in den Ruhemodus"
+  "notes": "Neues Layout: Kopf fest, nur Liste scrollt; Standort immer beim Start"
 }

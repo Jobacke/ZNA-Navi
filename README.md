@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.6.1 | 2026-11-12 | Layout: Kopf steht fest, nur die Liste scrollt (keine Überlappung); Statusleiste deckend; Standort bei jedem Start/Rückkehr |
 | 1.6.0 | 2026-11-12 | Knopf „Fahrt beenden“ (Kurzbefehl „Blitzer Ruhe“ → Ruhemodus) |
 | 1.5.2 | 2026-11-12 | Navi-Umschalter mit Doppelfunktion: gewählte App erneut antippen öffnet sie |
 | 1.5.1 | 2026-11-12 | Blitzer.de-Autostart einstellbar (jedes Öffnen / 30 Min. / 3 Std.), Rückkehr aus Navi-Apps zählt nicht |
