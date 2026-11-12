@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ZNA-Navi</title>
-<meta name="theme-color" content="#0b1020">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -32,7 +32,9 @@
 
   /* Kopfzeile fest oben – inkl. Abstand für Uhrzeit/Dynamic Island */
   :root{--sat:env(safe-area-inset-top)}
-  header{position:relative;flex:none;z-index:10;background:var(--bg);
+  /* Kopf in Schwarz = gleiche Farbe wie die iOS-Statusleiste, kein sichtbarer Rand */
+  html{background:#000}
+  header{position:relative;flex:none;z-index:10;background:#000;
     padding:calc(var(--sat) + 10px) clamp(10px,3.5vw,14px) 10px;border-bottom:1px solid var(--line);min-width:0;max-width:100%}
   .bar{display:flex;align-items:center;gap:clamp(6px,2.4vw,10px);min-width:0}
   .bar > *{min-width:0}
@@ -348,7 +350,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.6.3';
+const APP_VERSION = '1.6.4';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */

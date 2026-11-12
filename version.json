@@ -1,5 +1,5 @@
 {
-  "version": "1.6.3",
+  "version": "1.6.4",
   "date": "2026-11-12",
-  "notes": "Passt sich schmalen Displays an (z. B. Display-Zoom), nichts mehr zu breit"
+  "notes": "Kopfbereich schwarz wie die Statusleiste – kein Rand oben"
 }
