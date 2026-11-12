@@ -293,7 +293,7 @@
     <label for="setTop">Abstand oben zur Statusleiste (Uhrzeit/Akku)</label>
     <select class="field" id="setTop">
       <option value="auto">Automatisch</option>
-      <option value="plus">Extra Abstand (falls Uhrzeit/Akku die App überdecken)</option>
+      <option value="plus">Extra Abstand (falls Uhrzeit/Akku oder ein Schleier oben die App überdecken)</option>
     </select>
 
     <h3>Sortierung</h3>
@@ -350,7 +350,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.6.4';
+const APP_VERSION = '1.6.5';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -1203,7 +1203,8 @@ function fitHeader(){
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const underBar = isStandalone() && ios && envTop < 1 && Math.abs(window.innerHeight - screen.height) < 2;
   const forced = state.settings.topPad === 'plus';
-  document.documentElement.style.setProperty('--sat', forced ? 'max(env(safe-area-inset-top), 56px)' : (underBar ? '50px' : 'env(safe-area-inset-top)'));
+  // „Extra“: Statusleiste + Unschärfe-Zone, die iOS darunter legt
+  document.documentElement.style.setProperty('--sat', forced ? 'calc(max(env(safe-area-inset-top), 20px) + 44px)' : (underBar ? '50px' : 'env(safe-area-inset-top)'));
 }
 window.addEventListener('resize', fitHeader);
 window.addEventListener('orientationchange', () => setTimeout(fitHeader, 300));

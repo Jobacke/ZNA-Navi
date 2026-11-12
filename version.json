@@ -1,5 +1,5 @@
 {
-  "version": "1.6.4",
+  "version": "1.6.5",
   "date": "2026-11-12",
-  "notes": "Kopfbereich schwarz wie die Statusleiste – kein Rand oben"
+  "notes": "„Extra Abstand“ reicht jetzt unter den iOS-Schleier der Statusleiste"
 }
