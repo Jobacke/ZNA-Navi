@@ -1,5 +1,5 @@
 {
-  "version": "1.6.5",
+  "version": "1.7.0",
   "date": "2026-11-12",
-  "notes": "„Extra Abstand“ reicht jetzt unter den iOS-Schleier der Statusleiste"
+  "notes": "Mikrofon-Knopf überarbeitet: Text erscheint live im Suchfeld, automatischer Wechsel zum Tastatur-Diktat"
 }

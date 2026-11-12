@@ -59,6 +59,7 @@
   .navsel button.on{background:var(--text);color:var(--bg)}
   .navsel button .op{display:none;margin-left:5px;font-size:13px}
   .navsel button.on .op{display:inline}
+  .michint{margin-top:8px;padding:9px 12px;border-radius:10px;background:#0f2c4a;color:#bfe3ff;font-size:14px}
   #btnMic.on{background:var(--addr);border-color:var(--addr);animation:pulse 1.2s infinite}
   @keyframes pulse{50%{opacity:.6}}
 
@@ -163,6 +164,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
     </button>
   </form>
+  <div class="michint" id="micHint" hidden></div>
   <div class="navsel" id="navSel" aria-label="Navigations-App">
     <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps"><span class="lg">Google Maps</span><span class="sm">Google</span><span class="op">↗</span></button><button type="button" data-app="apple"><span class="lg">Apple Karten</span><span class="sm">Apple</span><span class="op">↗</span></button>
   </div>
@@ -296,6 +298,14 @@
       <option value="plus">Extra Abstand (falls Uhrzeit/Akku oder ein Schleier oben die App überdecken)</option>
     </select>
 
+    <label for="setMic">Mikrofon-Knopf</label>
+    <select class="field" id="setMic">
+      <option value="auto">Automatisch (empfohlen)</option>
+      <option value="speech">Immer Spracherkennung der App</option>
+      <option value="keyboard">Immer Diktat der iPhone-Tastatur</option>
+    </select>
+    <div class="hint">„Automatisch“ nutzt die Spracherkennung und wechselt von selbst zum Tastatur-Diktat, wenn sie auf diesem iPhone nicht zuverlässig läuft. Für das Tastatur-Diktat muss unter iPhone-Einstellungen → Allgemein → Tastatur die <b>Diktierfunktion</b> an sein.</div>
+
     <h3>Sortierung</h3>
     <select class="field" id="setSort">
       <option value="usage">Meistgenutzt zuerst</option>
@@ -350,7 +360,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.6.5';
+const APP_VERSION = '1.7.0';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -731,31 +741,69 @@ function closeAll(){ document.querySelectorAll('.ov').forEach(o => o.classList.r
 
 /* ---------- Sprache ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null;
-function dictateFallback(msg){
-  const s = $('#search'); s.focus();
-  toast(msg || 'Tipp: Mikrofon-Taste der Tastatur zum Diktieren nutzen', 3500);
+let rec = null, recText = '', recTimer = null, recHard = null, recStart = 0, recErr = false;
+const PH = $('#search').placeholder;
+function micMode(){
+  const m = state.settings.micMode || 'auto';
+  if(m === 'keyboard' || !SR) return 'keyboard';
+  if(m === 'speech') return 'speech';
+  return state.settings.srFailed ? 'keyboard' : 'speech';
 }
+function micHint(text, ms){
+  const h = $('#micHint'); clearTimeout(micHint._t);
+  if(!text){ h.hidden = true; return; }
+  h.innerHTML = text; h.hidden = false;
+  micHint._t = setTimeout(() => { h.hidden = true; }, ms || 7000);
+}
+function markSrFailed(){ if((state.settings.micMode || 'auto') === 'auto'){ state.settings.srFailed = true; save(); } }
+function startKeyboardDictation(){
+  // Muss direkt im Tipp passieren – sonst öffnet iOS die Tastatur nicht
+  const s = $('#search'); s.focus();
+  try{ s.setSelectionRange(0, s.value.length); }catch(e){}
+  micHint('🎤 Jetzt unten auf der Tastatur das <b>Mikrofon</b> antippen und die Adresse sprechen.');
+}
+function stopRec(){ if(rec){ try{ rec.stop(); }catch(e){} } }
+function micReset(){
+  clearTimeout(recTimer); clearTimeout(recHard);
+  $('#btnMic').classList.remove('on'); $('#search').placeholder = PH; rec = null;
+}
+$('#search').addEventListener('input', () => micHint(''));
 $('#btnMic').onclick = () => {
-  if(rec){ try{ rec.stop(); }catch(e){} return; }
-  if(!SR) return dictateFallback();
+  if(rec){ stopRec(); return; }
+  micHint('');
+  if(micMode() === 'keyboard') return startKeyboardDictation();
   try{
-    rec = new SR();
+    rec = new SR(); recText = ''; recErr = false; recStart = Date.now();
     rec.lang = 'de-DE'; rec.interimResults = true; rec.maxAlternatives = 1; rec.continuous = false;
     $('#btnMic').classList.add('on');
+    $('#search').value = ''; query = ''; $('#search').placeholder = 'Sprich jetzt …'; render();
     rec.onresult = e => {
-      const t = Array.from(e.results).map(x => x[0].transcript).join('').trim();
-      $('#search').value = t; query = t; render();
-      if(e.results[e.results.length-1].isFinal){ scheduleAddr(); render(); }
+      recText = Array.from(e.results).map(x => x[0].transcript).join('').trim();
+      $('#search').value = recText; query = recText; render();   // live mitschreiben
+      clearTimeout(recTimer); recTimer = setTimeout(stopRec, 1400); // kurze Pause = fertig
     };
     rec.onerror = e => {
-      if(e.error === 'no-speech') toast('Nichts verstanden – bitte nochmal');
-      else dictateFallback(e.error === 'not-allowed' || e.error === 'service-not-allowed'
-        ? 'Spracherkennung hier nicht erlaubt – Diktier-Taste der Tastatur nutzen' : null);
+      if(e.error === 'no-speech' || e.error === 'aborted') return;
+      recErr = true; markSrFailed();
+      micHint('Die Spracherkennung klappt hier nicht. <b>Mikrofon nochmal antippen</b> – dann geht es über das Diktat der Tastatur.', 9000);
     };
-    rec.onend = () => { $('#btnMic').classList.remove('on'); rec = null; scheduleAddr(); render(); };
+    rec.onend = () => {
+      const t = recText, quick = Date.now() - recStart < 900;
+      micReset();
+      if(t){
+        query = t; $('#search').value = t;
+        addr = { q:'', status:'idle', results:[] }; scheduleAddr(); render();
+        $('#search').blur();
+      }else if(!recErr){
+        if(quick){ markSrFailed(); micHint('Die Spracherkennung startet hier nicht. <b>Mikrofon nochmal antippen</b> – dann geht es über das Diktat der Tastatur.', 9000); }
+        else toast('Nichts verstanden – Mikrofon nochmal antippen', 2500);
+      }
+    };
+    recHard = setTimeout(stopRec, 12000); // Sicherheitsnetz
     rec.start();
-  }catch(e){ rec = null; $('#btnMic').classList.remove('on'); dictateFallback(); }
+  }catch(e){
+    micReset(); markSrFailed(); startKeyboardDictation();
+  }
 };
 
 /* ---------- Editor ---------- */
@@ -1038,6 +1086,7 @@ function openSettings(){
   $('#setLink').value = state.settings.linkMode;
   $('#setSort').value = state.settings.sort;
   $('#setTop').value = state.settings.topPad || 'auto';
+  $('#setMic').value = state.settings.micMode || 'auto';
   $('#setAutoSrv').checked = !!state.settings.autoSrv;
   $('#setKey').value = state.settings.w3wKey || '';
   $('#ghToken').value = gh().token || '';
@@ -1053,6 +1102,7 @@ function openSettings(){
   $('#ovSet').classList.add('show');
 }
 $('#setLink').onchange = e => { state.settings.linkMode = e.target.value; save(); render(); };
+$('#setMic').onchange = e => { state.settings.micMode = e.target.value; state.settings.srFailed = false; save(); };
 $('#setTop').onchange = e => { state.settings.topPad = e.target.value; save(); fitHeader(); };
 $('#setSort').onchange = e => { state.settings.sort = e.target.value; save(); render(); };
 $('#setAutoSrv').onchange = e => { state.settings.autoSrv = e.target.checked; save(); };

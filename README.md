@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.7.0 | 2026-11-12 | Mikrofon: Live-Text im Suchfeld, Auto-Stopp nach Sprechpause, automatischer Wechsel zum Tastatur-Diktat |
 | 1.6.5 | 2026-11-12 | „Extra Abstand“ vergrößert (unter den iOS-Statusleisten-Schleier) |
 | 1.6.4 | 2026-11-12 | Kopfbereich und Statusleiste einheitlich schwarz (kein Rand oben) |
 | 1.6.3 | 2026-11-12 | Responsive für schmale Displays/Display-Zoom, kein seitliches Überstehen |
