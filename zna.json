@@ -1,7 +1,7 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 2,
+  "rev": 3,
   "updated": "2026-11-12",
   "items": [
     {"name":"Augustinum","group":"ZNA","w3w":"kurve.trinken.exzellentes","lat":48.122049,"lon":11.487464},
@@ -26,6 +26,7 @@
     {"name":"Rechts der Isar Tor 6","group":"ZNA","w3w":"atomen.volles.dauernd","lat":48.138247,"lon":11.599519},
     {"name":"RK1","group":"ZNA","w3w":"vorzeitig.tante.unter","lat":48.154067,"lon":11.531503},
     {"name":"Schäftlarnstrasse 9","group":"ZNA","w3w":"kumpel.winkel.dieser","lat":48.11768,"lon":11.55792},
-    {"name":"Stroke Haar","group":"ZNA","w3w":"ausweg.pflegen.zwischen","lat":48.117198,"lon":11.746346}
+    {"name":"Stroke Haar","group":"ZNA","w3w":"ausweg.pflegen.zwischen","lat":48.117198,"lon":11.746346},
+    {"name":"zu Hause","group":"ZNA","w3w":"früh.wohnt.leiterin","lat":48.07491,"lon":11.67919,"note":"Zu Hause"}
   ]
 }
