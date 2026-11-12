@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZNA-Navi</title>
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ZNA-Navi">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#0b1020; --panel:#141b2f; --panel2:#1b2440; --line:#2a3555;
+    --text:#eef2fb; --muted:#93a0bf; --accent:#e0283c; --accent2:#ff4d5e;
+    --ok:#2ec27e; --warn:#f5a623; --blue:#33ccff;
+    --r:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+  body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 90px) env(safe-area-inset-left);min-height:100vh}
+  button,input,select,textarea{font:inherit;color:inherit}
+  a{color:var(--blue)}
+
+  header{position:sticky;top:0;z-index:5;background:rgba(11,16,32,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+  h1{font-size:21px;margin:0;flex:1;letter-spacing:.2px}
+  .iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer}
+  .iconbtn.on{background:var(--accent);border-color:var(--accent)}
+  .iconbtn svg{width:22px;height:22px}
+
+  .chips{display:flex;gap:8px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;font-weight:600;font-size:15px}
+  .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .search{margin-top:10px;width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);outline:none}
+  .search:focus{border-color:var(--blue)}
+
+  .status{padding:8px 16px 0;color:var(--muted);font-size:13px;min-height:22px}
+  .banner{margin:10px 14px 0;padding:10px 12px;border-radius:12px;background:#3a2a08;color:#ffd58a;font-size:14px}
+
+  main{padding:8px 14px;display:grid;gap:10px}
+  .tile{display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);
+    text-decoration:none;color:var(--text);min-height:76px;cursor:pointer;position:relative;user-select:none;-webkit-user-select:none}
+  .tile:active{transform:scale(.985);background:var(--panel2)}
+  .tile .go{flex:none;width:46px;height:46px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
+  .tile .go svg{width:24px;height:24px}
+  .tile .txt{flex:1;min-width:0}
+  .tile .name{font-size:19px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+  .tile .sub{color:var(--muted);font-size:14px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+  .tile .w3w{color:#ff7a85}
+  .tile .dist{color:var(--ok);font-weight:600}
+  .tile.top{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+  .tile.top::after{content:"Nächstes Ziel";position:absolute;top:-9px;right:14px;background:var(--ok);color:#04130b;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
+  .tile.missing{opacity:.75;border-style:dashed}
+  .tile.missing .go{background:#555d75}
+  .editing .tile .go{background:var(--panel2);border:1px solid var(--line)}
+
+  .empty{padding:26px 18px;text-align:center;color:var(--muted);background:var(--panel);border-radius:var(--r);border:1px dashed var(--line)}
+  .empty h2{color:var(--text);font-size:19px;margin:0 0 8px}
+
+  .fab{position:fixed;right:calc(16px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));z-index:6;
+    padding:14px 20px;border-radius:999px;border:0;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer;display:none}
+  .editing .fab{display:block}
+
+  .btn{padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:600}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.ok{background:var(--ok);border-color:var(--ok);color:#04130b}
+  .btn.danger{background:transparent;border-color:#7a2430;color:#ff8a95}
+  .btn.small{padding:8px 12px;font-size:14px}
+  .btn:disabled{opacity:.5}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row .btn{flex:1 1 auto}
+
+  /* Overlays */
+  .ov{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+  .ov.show{display:flex}
+  .sheet{width:100%;max-width:640px;max-height:92vh;overflow:auto;background:var(--bg);border:1px solid var(--line);border-bottom:0;
+    border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+  @media (min-width:700px){.ov{align-items:center}.sheet{border-radius:20px;border-bottom:1px solid var(--line)}}
+  .sheet h2{margin:0 0 12px;font-size:20px;display:flex;align-items:center;justify-content:space-between}
+  .sheet h3{margin:20px 0 8px;font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+  .field{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);outline:none}
+  .field:focus{border-color:var(--blue)}
+  textarea.field{min-height:130px;resize:vertical;font-size:14px}
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
+  .help{font-size:14px;color:#c9d2e8;background:var(--panel);border-radius:12px;padding:12px 14px;border:1px solid var(--line)}
+  .help ol{margin:6px 0 0;padding-left:20px}.help li{margin:4px 0}
+  .preview{font-size:14px;margin-top:8px}
+  .preview .it{padding:6px 0;border-bottom:1px solid var(--line)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px}
+  .tag.new{background:#173d2a;color:#7ee2a8}.tag.upd{background:#13314a;color:#8fd3ff}.tag.miss{background:#3a2a08;color:#ffd58a}
+
+  .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;background:#eef2fb;color:#0b1020;
+    padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l7 17-7-4-7 4z" fill="#fff"/></svg>
+    </div>
+    <h1>ZNA-Navi</h1>
+    <button class="iconbtn" id="btnNearest" title="Nach Entfernung sortieren" aria-label="Nächstes Ziel finden">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+    </button>
+    <button class="iconbtn" id="btnEdit" title="Bearbeiten" aria-label="Ziele bearbeiten">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
+    </button>
+    <button class="iconbtn" id="btnSettings" title="Einstellungen" aria-label="Einstellungen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </div>
+  <div class="chips" id="chips"></div>
+  <input class="search" id="search" type="search" placeholder="Suchen …" autocomplete="off" autocorrect="off" spellcheck="false">
+</header>
+
+<div id="storageWarn" class="banner" hidden>Dieser Browser erlaubt hier kein dauerhaftes Speichern. Änderungen gehen beim Schließen verloren – sichere sie über Einstellungen → Export.</div>
+<div class="status" id="status"></div>
+<main id="list"></main>
+
+<button class="fab" id="fab">+ Ziel</button>
+
+<!-- Editor -->
+<div class="ov" id="ovEdit">
+  <div class="sheet">
+    <h2><span id="edTitle">Ziel</span><button class="btn small" data-close>Schließen</button></h2>
+    <label for="edName">Name</label>
+    <input class="field" id="edName" placeholder="z. B. Klinikum Großhadern – ZNA">
+    <label for="edGroup">Gruppe</label>
+    <input class="field" id="edGroup" list="groupList" placeholder="ZNA">
+    <datalist id="groupList"></datalist>
+    <label for="edW3w">what3words-Adresse</label>
+    <input class="field" id="edW3w" placeholder="///wort.wort.wort" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <label for="edCoords">Koordinaten (Breite, Länge)</label>
+    <input class="field" id="edCoords" placeholder="48.110512, 11.469870" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="hint">Eintippen oder einfügen – auch Google-/Apple-Maps-Links werden erkannt.</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn small" id="edConvert">what3words → Koordinaten</button>
+      <button class="btn small" id="edHere">Mein Standort</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <a class="btn small" id="edOpenW3w" href="#" target="_blank" rel="noopener" style="text-align:center;text-decoration:none;color:inherit">In what3words zeigen</a>
+      <button class="btn small" id="edCopyLink">Waze-Link kopieren</button>
+    </div>
+    <label for="edNote">Notiz (optional)</label>
+    <input class="field" id="edNote" placeholder="z. B. Liegendanfahrt über Rückseite">
+    <div class="row" style="margin-top:18px">
+      <button class="btn danger" id="edDelete">Löschen</button>
+      <button class="btn primary" id="edSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Einstellungen -->
+<div class="ov" id="ovSet">
+  <div class="sheet">
+    <h2>Einstellungen<button class="btn small" data-close>Schließen</button></h2>
+
+    <h3>Liste aus what3words übernehmen</h3>
+    <div class="help">
+      <ol>
+        <li>In what3words: Menü → Einstellungen → <b>Teilen-Einstellungen</b> → „Breiten- &amp; Längengrad“ einschalten, Format <b>Dezimal</b>.</li>
+        <li>Gespeicherte Orte → Liste <b>ZNA</b> → ⋯ → <b>Liste teilen</b> → „Kopieren“ (oder an dich selbst senden).</li>
+        <li>Text unten einfügen → <b>Vorschau</b> → <b>Importieren</b>.</li>
+      </ol>
+      Klappt das Teilen der ganzen Liste nicht, einzelne Orte teilen und nacheinander einfügen – mehrere Orte auf einmal sind kein Problem.
+    </div>
+    <label for="impGroup">Gruppe für importierte Ziele</label>
+    <input class="field" id="impGroup" value="ZNA" list="groupList">
+    <label for="impText">Geteilter Text</label>
+    <textarea class="field" id="impText" placeholder="Klinikum Beispiel ZNA&#10;///wort.wort.wort&#10;48.123456, 11.654321"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="impPreview">Vorschau</button>
+      <button class="btn ok" id="impDo" disabled>Importieren</button>
+    </div>
+    <div class="preview" id="impOut"></div>
+
+    <h3>Waze-Start</h3>
+    <label for="setLink">Linkart</label>
+    <select class="field" id="setLink">
+      <option value="auto">Automatisch (empfohlen)</option>
+      <option value="scheme">Direkt per App-Schema (waze://)</option>
+      <option value="universal">Universal-Link (https://waze.com/ul)</option>
+    </select>
+    <div class="hint">Automatisch: Vom Home-Bildschirm aus wird waze:// verwendet, im Browser der Universal-Link. Öffnet sich statt Waze eine Webseite, die andere Variante wählen.</div>
+
+    <h3>Sortierung</h3>
+    <select class="field" id="setSort">
+      <option value="usage">Meistgenutzt zuerst</option>
+      <option value="name">Alphabetisch</option>
+    </select>
+    <label style="display:flex;gap:10px;align-items:center;color:var(--text);font-size:15px;margin-top:12px">
+      <input type="checkbox" id="setAutoNear" style="width:22px;height:22px"> Beim Öffnen automatisch nach Entfernung sortieren
+    </label>
+    <div class="hint">Dann steht das nächstgelegene Ziel (Luftlinie) beim Start oben und ist grün markiert.</div>
+
+    <h3>what3words-API (optional)</h3>
+    <label for="setKey">API-Schlüssel</label>
+    <input class="field" id="setKey" placeholder="z. B. ABCD1234" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="hint">Nur nötig, wenn du Ziele ohne Koordinaten automatisch umrechnen willst. Schlüssel gibt es auf developer.what3words.com; die Umrechnung in Koordinaten kann je nach API-Tarif kostenpflichtig sein. Das Premium-Abo der App ist kein API-Tarif.</div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn small" id="setFill">Fehlende Koordinaten ergänzen</button>
+    </div>
+
+    <h3>Sichern &amp; Übertragen</h3>
+    <div class="row">
+      <button class="btn small" id="expCopy">Export kopieren</button>
+      <button class="btn small" id="expShow">Export anzeigen</button>
+    </div>
+    <textarea class="field" id="expText" readonly hidden style="margin-top:8px"></textarea>
+    <div class="hint">Zum Wiederherstellen den exportierten Text oben bei „Geteilter Text“ einfügen.</div>
+
+    <h3>Siri &amp; Kurzbefehle</h3>
+    <div class="help">
+      Für Sprachstart („Hey Siri, ZNA Schwabing“): Ziel bearbeiten → <b>Waze-Link kopieren</b>. In der Kurzbefehle-App neuen Kurzbefehl mit der Aktion <b>URL öffnen</b> anlegen, Link einfügen, Kurzbefehl passend benennen. Siri startet Waze dann direkt.
+    </div>
+
+    <h3>Als App installieren</h3>
+    <div class="help">Safari → Teilen → <b>Zum Home-Bildschirm</b>. Danach öffnet ZNA-Navi wie eine eigene App, auch ohne Netz.</div>
+    <div class="hint" style="margin-top:14px">Alle Daten bleiben auf diesem Gerät. ZNA-Navi v1.0</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Speicher ---------- */
+const KEY = 'zna-navi-v1';
+let canStore = true;
+const DEFAULTS = { linkMode:'auto', sort:'usage', autoNear:false, w3wKey:'', group:'ZNA' };
+let state = { items:[], settings:{...DEFAULTS} };
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ const d = JSON.parse(raw); state.items = Array.isArray(d.items)?d.items:[]; state.settings = {...DEFAULTS, ...(d.settings||{})}; }
+  }catch(e){ canStore = false; }
+}
+function save(){
+  if(!canStore) return;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ canStore = false; $('#storageWarn').hidden = false; }
+}
+
+/* ---------- Helfer ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const hasCoords = it => typeof it.lat === 'number' && typeof it.lon === 'number' && isFinite(it.lat) && isFinite(it.lon);
+function toast(msg, ms=2200){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'), ms); }
+
+const isStandalone = () => (window.navigator.standalone === true) || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+
+/* ---------- Parser ---------- */
+const W3W_RE = /(?:\/\/\/|w3w\.co\/|what3words\.com\/(?:[a-z]{2}\/)?)([\p{L}\p{M}]+\.[\p{L}\p{M}]+\.[\p{L}\p{M}]+)/u;
+const W3W_BARE = /^\s*(?:\/\/\/)?([\p{L}\p{M}]+\.[\p{L}\p{M}]+\.[\p{L}\p{M}]+)\s*$/u;
+const COORD_RE = /(?:^|[^\d.,])([NS]\s*)?(-?\d{1,2}[.,]\d{3,})\s*°?\s*([NS])?\s*[,;\s/]\s*([EWO]\s*)?(-?\d{1,3}[.,]\d{3,})\s*°?\s*([EWO])?/i;
+
+function parseW3W(str, allowBare){
+  if(!str) return null;
+  let m = str.match(W3W_RE);
+  if(!m && allowBare) m = str.match(W3W_BARE);
+  return m ? m[1].toLowerCase() : null;
+}
+function parseCoords(str){
+  if(!str) return null;
+  const m = str.match(COORD_RE);
+  if(!m) return null;
+  let lat = parseFloat(m[2].replace(',', '.')), lon = parseFloat(m[5].replace(',', '.'));
+  const ns = (m[1]||m[3]||'').trim().toUpperCase(), ew = (m[4]||m[6]||'').trim().toUpperCase();
+  if(ns === 'S') lat = -Math.abs(lat);
+  if(ew === 'W') lon = -Math.abs(lon);
+  if(Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  return { lat, lon, raw: m[0] };
+}
+
+const BOILER = /what3words|w3w|geteilt|shared|teilen|share|liste\b|\blist\b|koordinat|latitude|longitude|breiten|längen|\bgps\b|schau dir|sieh dir|hier ist|check out|here is|ort an$|location$/i;
+function parseImport(text){
+  const t = (text||'').trim();
+  if(!t) return [];
+  // 1) Eigener Export (JSON)?
+  if(t[0] === '{' || t[0] === '['){
+    try{
+      const d = JSON.parse(t); const arr = Array.isArray(d) ? d : (d.items||[]);
+      return arr.filter(x=>x && (x.w3w || hasCoords(x))).map(x => ({ name:x.name||x.w3w||'Ziel', group:x.group, w3w:x.w3w||'', lat:x.lat, lon:x.lon, note:x.note||'' }));
+    }catch(e){ /* weiter mit Text */ }
+  }
+  // 2) Freier Text (what3words-Teilen)
+  const recs = []; let cur = null;
+  const flush = () => { if(cur && (cur.w3w || hasCoords(cur))) recs.push(cur); cur = null; };
+  for(const lineRaw of t.split(/\r?\n/)){
+    const line = lineRaw.trim(); if(!line) continue;
+    const w = parseW3W(line, false) || (/^\/{0,3}[\p{L}\p{M}]+\.[\p{L}\p{M}]+\.[\p{L}\p{M}]+$/u.test(line) ? parseW3W(line,true) : null);
+    const c = parseCoords(line);
+    let rest = line.replace(/https?:\/\/\S+/g,' ');
+    if(c) rest = rest.replace(c.raw, ' ');
+    rest = rest.replace(/\/\/\/[\p{L}\p{M}.]+/gu,' ').replace(/[\p{L}\p{M}]+\.[\p{L}\p{M}]+\.[\p{L}\p{M}]+/gu, m => w && m.toLowerCase()===w ? ' ' : m);
+    rest = rest.replace(/^[\s\-–•*:,;|()]+|[\s\-–•*:,;|()]+$/g,'').replace(/\s{2,}/g,' ');
+    const isName = rest.length >= 2 && /\p{L}/u.test(rest) && !BOILER.test(rest);
+    if(isName){
+      if(cur && (cur.w3w || hasCoords(cur))) flush();
+      if(!cur) cur = { name: rest };
+      else if(!cur.name) cur.name = rest;
+      else cur.note = (cur.note ? cur.note + ' · ' : '') + rest;
+    }
+    if(w){
+      if(cur && cur.w3w && cur.w3w !== w) flush();
+      cur = cur || {}; cur.w3w = w;
+    }
+    if(c){
+      if(cur && hasCoords(cur)) flush();
+      cur = cur || {}; cur.lat = c.lat; cur.lon = c.lon;
+    }
+  }
+  flush();
+  return recs.map(r => ({ name: r.name || ('///' + r.w3w), w3w: r.w3w || '', lat: r.lat, lon: r.lon, note: r.note || '' }));
+}
+
+/* ---------- Geo ---------- */
+let pos = null; // {lat,lon,acc,t}
+function haversine(a, b){
+  const R = 6371000, rad = x => x*Math.PI/180;
+  const dLat = rad(b.lat-a.lat), dLon = rad(b.lon-a.lon);
+  const h = Math.sin(dLat/2)**2 + Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+const fmtDist = m => m < 1000 ? Math.round(m/10)*10 + ' m' : (m/1000).toLocaleString('de-DE',{maximumFractionDigits: m<10000?1:0}) + ' km';
+function getPos(){
+  return new Promise((res, rej) => {
+    if(!navigator.geolocation) return rej(new Error('Standort wird nicht unterstützt'));
+    navigator.geolocation.getCurrentPosition(
+      p => res({ lat:p.coords.latitude, lon:p.coords.longitude, acc:p.coords.accuracy, t:Date.now() }),
+      e => rej(new Error(e.code===1 ? 'Standortzugriff verweigert' : 'Standort nicht verfügbar')),
+      { enableHighAccuracy:true, timeout:10000, maximumAge:30000 });
+  });
+}
+let byDistance = false;
+async function locate(silent){
+  $('#btnNearest').classList.add('on');
+  setStatus('Standort wird ermittelt …');
+  try{
+    pos = await getPos(); byDistance = true; render();
+  }catch(e){
+    byDistance = false; $('#btnNearest').classList.remove('on'); setStatus('');
+    if(!silent) toast(e.message);
+  }
+}
+
+/* ---------- Waze ---------- */
+function wazeUrl(it, forceMode){
+  const lat = it.lat.toFixed(6), lon = it.lon.toFixed(6);
+  let mode = forceMode || state.settings.linkMode;
+  if(mode === 'auto') mode = isStandalone() ? 'scheme' : 'universal';
+  return mode === 'scheme'
+    ? `waze://?ll=${lat},${lon}&navigate=yes`
+    : `https://waze.com/ul?ll=${lat}%2C${lon}&navigate=yes&utm_source=zna-navi`;
+}
+
+/* ---------- Rendering ---------- */
+let editing = false, query = '';
+function groups(){
+  const s = new Set(state.items.map(i => i.group || 'ZNA'));
+  if(!s.size) s.add('ZNA');
+  return [...s].sort((a,b)=>a.localeCompare(b,'de'));
+}
+function setStatus(t){ $('#status').textContent = t; }
+
+function render(){
+  const gs = groups();
+  let g = state.settings.group;
+  if(g !== '__all' && !gs.includes(g)) g = state.settings.group = gs[0];
+  const chips = gs.length > 1 ? [...gs, '__all'] : gs;
+  $('#chips').innerHTML = chips.map(x => `<button class="chip${x===g?' on':''}" data-g="${esc(x)}">${x==='__all'?'Alle':esc(x)}</button>`).join('');
+  $('#groupList').innerHTML = gs.map(x=>`<option value="${esc(x)}">`).join('');
+
+  const q = query.trim().toLowerCase();
+  let items = state.items.filter(i => (g==='__all' || (i.group||'ZNA')===g) &&
+    (!q || [i.name,i.w3w,i.note,i.group].join(' ').toLowerCase().includes(q)));
+
+  if(byDistance && pos){
+    items.forEach(i => i._d = hasCoords(i) ? haversine(pos, i) : Infinity);
+    items.sort((a,b) => a._d - b._d);
+    setStatus(`Nach Entfernung (Luftlinie) · Standort ±${Math.round(pos.acc)} m`);
+  }else{
+    items.forEach(i => delete i._d);
+    if(state.settings.sort === 'name') items.sort((a,b)=>a.name.localeCompare(b.name,'de'));
+    else items.sort((a,b)=>(b.uses||0)-(a.uses||0) || (b.lastUsed||0)-(a.lastUsed||0) || a.name.localeCompare(b.name,'de'));
+    if(!$('#status').textContent.startsWith('Standort')) setStatus(state.items.length ? (editing ? 'Bearbeiten: Ziel antippen zum Ändern' : `${items.length} Ziel${items.length===1?'':'e'} · antippen = Waze startet`) : '');
+  }
+
+  const L = $('#list');
+  if(!state.items.length){
+    L.innerHTML = `<div class="empty"><h2>Noch keine Ziele</h2>
+      Übernimm deine ZNA-Liste aus what3words in einem Rutsch oder lege Ziele einzeln an.
+      <div class="row" style="margin-top:16px"><button class="btn primary" id="emptyImport">Liste importieren</button><button class="btn" id="emptyAdd">Ziel anlegen</button></div></div>`;
+    $('#emptyImport').onclick = () => openSettings(true);
+    $('#emptyAdd').onclick = () => openEditor(null);
+    return;
+  }
+  if(!items.length){ L.innerHTML = `<div class="empty">Keine Treffer.</div>`; return; }
+
+  const arrow = '<svg viewBox="0 0 24 24"><path d="M12 3l7 17-7-4-7 4z" fill="#fff"/></svg>';
+  const pen = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
+  L.innerHTML = items.map((i, idx) => {
+    const ok = hasCoords(i);
+    const top = byDistance && pos && idx===0 && ok && !editing;
+    const sub = [
+      i.w3w ? `<span class="w3w">///${esc(i.w3w)}</span>` : '',
+      (i._d!=null && isFinite(i._d)) ? `<span class="dist">${fmtDist(i._d)}</span>` : '',
+      !ok ? '<span style="color:var(--warn)">Koordinaten fehlen</span>' : '',
+      i.note ? `<span>${esc(i.note)}</span>` : ''
+    ].filter(Boolean).join('');
+    const href = ok && !editing ? wazeUrl(i) : '#';
+    return `<a class="tile${top?' top':''}${ok?'':' missing'}" href="${esc(href)}" data-id="${esc(i.id)}">
+      <div class="go">${editing||!ok ? pen : arrow}</div>
+      <div class="txt"><div class="name">${esc(i.name)}</div><div class="sub">${sub}</div></div></a>`;
+  }).join('');
+}
+
+/* ---------- Interaktion Liste ---------- */
+$('#list').addEventListener('click', e => {
+  const a = e.target.closest('.tile'); if(!a) return;
+  const it = state.items.find(x => x.id === a.dataset.id); if(!it) return;
+  if(editing || !hasCoords(it)){ e.preventDefault(); openEditor(it); return; }
+  // Navigation läuft über den echten Link (wichtig für iOS) – nur Nutzung zählen
+  it.uses = (it.uses||0) + 1; it.lastUsed = Date.now(); save();
+});
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if(!b) return;
+  state.settings.group = b.dataset.g; save(); render();
+});
+$('#search').addEventListener('input', e => { query = e.target.value; render(); });
+$('#btnNearest').onclick = () => {
+  if(byDistance){ byDistance = false; $('#btnNearest').classList.remove('on'); setStatus(''); render(); }
+  else locate(false);
+};
+$('#btnEdit').onclick = () => {
+  editing = !editing; document.body.classList.toggle('editing', editing);
+  $('#btnEdit').classList.toggle('on', editing); setStatus(''); render();
+};
+$('#fab').onclick = () => openEditor(null);
+$('#btnSettings').onclick = () => openSettings(false);
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = closeAll);
+document.querySelectorAll('.ov').forEach(o => o.addEventListener('click', e => { if(e.target === o) closeAll(); }));
+function closeAll(){ document.querySelectorAll('.ov').forEach(o => o.classList.remove('show')); }
+
+/* ---------- Editor ---------- */
+let edItem = null, delArmed = false;
+function openEditor(it){
+  edItem = it; delArmed = false;
+  $('#edTitle').textContent = it ? 'Ziel bearbeiten' : 'Neues Ziel';
+  $('#edName').value = it?.name || '';
+  $('#edGroup').value = it?.group || (state.settings.group !== '__all' ? state.settings.group : 'ZNA');
+  $('#edW3w').value = it?.w3w ? '///' + it.w3w : '';
+  $('#edCoords').value = it && hasCoords(it) ? `${it.lat.toFixed(6)}, ${it.lon.toFixed(6)}` : '';
+  $('#edNote').value = it?.note || '';
+  $('#edDelete').style.display = it ? '' : 'none';
+  $('#edDelete').textContent = 'Löschen';
+  updW3wLink();
+  $('#ovEdit').classList.add('show');
+  if(!it) setTimeout(()=>$('#edName').focus(), 50);
+}
+function updW3wLink(){
+  const w = parseW3W($('#edW3w').value, true);
+  const a = $('#edOpenW3w');
+  a.href = w ? `https://what3words.com/${encodeURIComponent(w)}` : '#';
+  a.style.opacity = w ? 1 : .5;
+}
+$('#edW3w').addEventListener('input', updW3wLink);
+$('#edCoords').addEventListener('blur', () => {
+  const c = parseCoords($('#edCoords').value);
+  if(c) $('#edCoords').value = `${c.lat.toFixed(6)}, ${c.lon.toFixed(6)}`;
+});
+$('#edOpenW3w').addEventListener('click', e => { if($('#edOpenW3w').getAttribute('href') === '#'){ e.preventDefault(); toast('Erst eine what3words-Adresse eingeben'); } });
+
+$('#edConvert').onclick = async () => {
+  const w = parseW3W($('#edW3w').value, true);
+  if(!w) return toast('Keine gültige what3words-Adresse');
+  if(!state.settings.w3wKey) return toast('Dafür in den Einstellungen einen API-Schlüssel eintragen', 3500);
+  $('#edConvert').disabled = true;
+  try{ const c = await w3wToCoords(w); $('#edCoords').value = `${c.lat.toFixed(6)}, ${c.lon.toFixed(6)}`; toast('Koordinaten übernommen'); }
+  catch(e){ toast(e.message, 4000); }
+  $('#edConvert').disabled = false;
+};
+$('#edHere').onclick = async () => {
+  $('#edHere').disabled = true; toast('Standort wird ermittelt …');
+  try{ const p = await getPos(); $('#edCoords').value = `${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}`; toast(`Standort übernommen (±${Math.round(p.acc)} m)`); }
+  catch(e){ toast(e.message); }
+  $('#edHere').disabled = false;
+};
+$('#edCopyLink').onclick = async () => {
+  const c = parseCoords($('#edCoords').value);
+  if(!c) return toast('Erst Koordinaten eintragen');
+  const url = wazeUrl({lat:c.lat, lon:c.lon}, 'universal');
+  try{ await navigator.clipboard.writeText(url); toast('Waze-Link kopiert'); }
+  catch(e){ prompt2(url); }
+};
+function prompt2(text){ $('#expText').hidden = false; $('#expText').value = text; closeAll(); openSettings(false); $('#expText').scrollIntoView({block:'center'}); $('#expText').select(); toast('Link markiert – bitte manuell kopieren', 3000); }
+
+$('#edSave').onclick = () => {
+  const name = $('#edName').value.trim();
+  const w3w = parseW3W($('#edW3w').value, true) || '';
+  const cRaw = $('#edCoords').value.trim();
+  const c = parseCoords(cRaw);
+  if(!name) return toast('Bitte einen Namen eingeben');
+  if(cRaw && !c) return toast('Koordinaten nicht erkannt – Format: 48.123456, 11.654321', 3500);
+  if($('#edW3w').value.trim() && !w3w) return toast('what3words-Adresse nicht erkannt');
+  const data = { name, group: $('#edGroup').value.trim() || 'ZNA', w3w, note: $('#edNote').value.trim() };
+  if(c){ data.lat = c.lat; data.lon = c.lon; } else { data.lat = undefined; data.lon = undefined; }
+  if(edItem) Object.assign(edItem, data);
+  else state.items.push({ id: uid(), uses:0, ...data });
+  if(state.settings.group !== '__all') state.settings.group = data.group;
+  save(); closeAll(); render();
+  toast(c ? 'Gespeichert' : 'Gespeichert – Koordinaten fehlen noch', 2500);
+};
+$('#edDelete').onclick = () => {
+  if(!edItem) return;
+  if(!delArmed){ delArmed = true; $('#edDelete').textContent = 'Wirklich löschen?'; return; }
+  state.items = state.items.filter(x => x !== edItem); save(); closeAll(); render(); toast('Gelöscht');
+};
+
+/* ---------- what3words API ---------- */
+async function w3wToCoords(words){
+  const url = `https://api.what3words.com/v3/convert-to-coordinates?words=${encodeURIComponent(words)}&key=${encodeURIComponent(state.settings.w3wKey)}`;
+  let res, d;
+  try{ res = await fetch(url); d = await res.json(); }
+  catch(e){ throw new Error('what3words nicht erreichbar'); }
+  if(d && d.coordinates) return { lat: d.coordinates.lat, lon: d.coordinates.lng };
+  const msg = d?.error?.message || ('Fehler ' + (res && res.status));
+  throw new Error('what3words: ' + msg);
+}
+
+/* ---------- Einstellungen ---------- */
+function openSettings(focusImport){
+  $('#setLink').value = state.settings.linkMode;
+  $('#setSort').value = state.settings.sort;
+  $('#setAutoNear').checked = !!state.settings.autoNear;
+  $('#setKey').value = state.settings.w3wKey || '';
+  if(state.settings.group && state.settings.group !== '__all') $('#impGroup').value = state.settings.group;
+  $('#ovSet').classList.add('show');
+  if(focusImport) setTimeout(()=>$('#impText').focus(), 60);
+}
+$('#setLink').onchange = e => { state.settings.linkMode = e.target.value; save(); render(); };
+$('#setSort').onchange = e => { state.settings.sort = e.target.value; save(); render(); };
+$('#setAutoNear').onchange = e => { state.settings.autoNear = e.target.checked; save(); };
+$('#setKey').onchange = e => { state.settings.w3wKey = e.target.value.trim(); save(); };
+
+$('#setFill').onclick = async () => {
+  if(!state.settings.w3wKey) return toast('Erst einen API-Schlüssel eintragen');
+  const todo = state.items.filter(i => !hasCoords(i) && i.w3w);
+  if(!todo.length) return toast('Alle Ziele haben bereits Koordinaten');
+  let ok = 0, err = '';
+  for(const i of todo){
+    try{ const c = await w3wToCoords(i.w3w); i.lat = c.lat; i.lon = c.lon; ok++; }
+    catch(e){ err = e.message; break; }
+  }
+  save(); render();
+  toast(err ? `${ok} ergänzt – ${err}` : `${ok} Ziel(e) ergänzt`, 4000);
+};
+
+/* Import */
+let pending = [];
+function sameSpot(a, b){
+  if(a.w3w && b.w3w) return a.w3w === b.w3w;
+  if(hasCoords(a) && hasCoords(b)) return haversine(a, b) < 5;
+  return false;
+}
+$('#impPreview').onclick = () => {
+  const recs = parseImport($('#impText').value);
+  const grp = $('#impGroup').value.trim() || 'ZNA';
+  pending = recs.map(r => {
+    const ex = state.items.find(i => sameSpot(i, r));
+    return { r: { ...r, group: r.group || grp }, ex };
+  });
+  const out = $('#impOut');
+  if(!pending.length){ out.innerHTML = '<div class="hint">Nichts erkannt. Der Text braucht pro Ort eine what3words-Adresse (///…) und/oder Koordinaten.</div>'; $('#impDo').disabled = true; return; }
+  const nNew = pending.filter(p=>!p.ex).length, nMiss = pending.filter(p=>!hasCoords(p.r) && !(p.ex && hasCoords(p.ex))).length;
+  out.innerHTML = `<div class="hint">${pending.length} Ort(e) erkannt · ${nNew} neu · ${pending.length-nNew} bereits vorhanden${nMiss?` · ${nMiss} ohne Koordinaten`:''}</div>` +
+    pending.map(p => `<div class="it"><b>${esc(p.r.name)}</b>${p.ex?'<span class="tag upd">aktualisieren</span>':'<span class="tag new">neu</span>'}${hasCoords(p.r)?'':'<span class="tag miss">ohne Koordinaten</span>'}
+      <div class="hint" style="margin:2px 0 0">${p.r.w3w?'///'+esc(p.r.w3w):''} ${hasCoords(p.r)?`· ${p.r.lat.toFixed(5)}, ${p.r.lon.toFixed(5)}`:''}</div></div>`).join('');
+  $('#impDo').disabled = false;
+};
+$('#impText').addEventListener('input', () => { $('#impDo').disabled = true; });
+$('#impDo').onclick = () => {
+  let added = 0, upd = 0;
+  for(const {r, ex} of pending){
+    if(ex){
+      if(!ex.w3w && r.w3w) ex.w3w = r.w3w;
+      if(hasCoords(r)){ ex.lat = r.lat; ex.lon = r.lon; }
+      if(r.name && r.name !== '///' + r.w3w && (!ex.name || ex.name.startsWith('///'))) ex.name = r.name;
+      upd++;
+    }else{
+      state.items.push({ id: uid(), uses:0, name:r.name, group:r.group, w3w:r.w3w||'', lat:r.lat, lon:r.lon, note:r.note||'' });
+      added++;
+    }
+  }
+  if(pending[0]) state.settings.group = pending[0].r.group;
+  pending = []; $('#impOut').innerHTML = ''; $('#impText').value = ''; $('#impDo').disabled = true;
+  save(); closeAll(); render();
+  toast(`${added} neu, ${upd} aktualisiert`);
+};
+
+/* Export */
+const exportText = () => JSON.stringify({ app:'zna-navi', v:1, items: state.items.map(({_d, ...i}) => i) }, null, 1);
+$('#expCopy').onclick = async () => {
+  try{ await navigator.clipboard.writeText(exportText()); toast('Export kopiert'); }
+  catch(e){ $('#expShow').click(); toast('Bitte manuell kopieren'); }
+};
+$('#expShow').onclick = () => { const t = $('#expText'); t.hidden = !t.hidden; t.value = exportText(); if(!t.hidden){ t.focus(); t.select(); } };
+
+/* ---------- Start ---------- */
+load();
+if(!canStore) $('#storageWarn').hidden = false;
+render();
+if(state.settings.autoNear && state.items.length) locate(true);
+document.addEventListener('visibilitychange', () => {
+  // Beim Zurückkehren aus Waze Entfernung aktualisieren
+  if(document.visibilityState === 'visible' && byDistance) locate(true);
+});
+if('serviceWorker' in navigator && location.protocol === 'https:'){
+  try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
+}
+
+// Für Tests
+window.__zna = { parseImport, parseCoords, parseW3W, wazeUrl };
+})();
+</script>
+</body>
+</html>
