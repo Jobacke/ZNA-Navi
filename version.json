@@ -1,5 +1,5 @@
 {
-  "version": "1.4.1",
+  "version": "1.4.2",
   "date": "2026-11-12",
-  "notes": "Neues App-Icon „Neon-Puls“"
+  "notes": "Icon-Dateien neu benannt, damit iOS das neue Icon sicher lädt"
 }
