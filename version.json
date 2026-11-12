@@ -1,5 +1,5 @@
 {
-  "version": "1.5.2",
+  "version": "1.6.0",
   "date": "2026-11-12",
-  "notes": "Navi-Umschalter: gewählte App nochmal antippen öffnet sie direkt"
+  "notes": "Knopf „Fahrt beenden“: schickt Blitzer.de in den Ruhemodus"
 }
