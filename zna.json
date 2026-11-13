@@ -1,7 +1,7 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 6,
+  "rev": 7,
   "updated": "2026-11-13",
   "items": [
     {"name":"Augustinum","group":"ZNA","w3w":"kurve.trinken.exzellentes","lat":48.122049,"lon":11.487464},
@@ -22,8 +22,8 @@
     {"name":"Pasing","group":"ZNA","w3w":"winkel.bürste.kosten","lat":48.143906,"lon":11.453463},
     {"name":"Perlach","group":"ZNA","w3w":"gebäude.gesang.betonung","lat":48.102267,"lon":11.62926},
     {"name":"Portalklinik","group":"ZNA","w3w":"lenkung.manche.preis","lat":48.132748,"lon":11.561045},
-    {"name":"Rechts der Isar","group":"ZNA","w3w":"einreise.becken.eule","lat":48.136225,"lon":11.601095},
-    {"name":"Rechts der Isar Tor 6","group":"ZNA","w3w":"atomen.volles.dauernd","lat":48.138247,"lon":11.599519},
+    {"name":"Rechts","group":"ZNA","w3w":"einreise.becken.eule","lat":48.136225,"lon":11.601095},
+    {"name":"Rechts Tor 6","group":"ZNA","w3w":"atomen.volles.dauernd","lat":48.138247,"lon":11.599519},
     {"name":"Rinecker","group":"ZNA","w3w":"heftig.mitgefühl.trinken","lat":48.103237,"lon":11.547985},
     {"name":"RK1","group":"ZNA","w3w":"vorzeitig.tante.unter","lat":48.154067,"lon":11.531503},
     {"name":"Schäftlarnstrasse 9","group":"ZNA","w3w":"kumpel.winkel.dieser","lat":48.11768,"lon":11.55792},
