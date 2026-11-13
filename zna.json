@@ -1,7 +1,7 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 5,
+  "rev": 6,
   "updated": "2026-11-13",
   "items": [
     {"name":"Augustinum","group":"ZNA","w3w":"kurve.trinken.exzellentes","lat":48.122049,"lon":11.487464},
@@ -16,7 +16,7 @@
     {"name":"Harlaching","group":"ZNA","w3w":"ehen.manche.testpilot","lat":48.086446,"lon":11.556827},
     {"name":"Herzzentrum","group":"ZNA","w3w":"erringen.weicher.duften","lat":48.152288,"lon":11.548759},
     {"name":"Kinderklinik Innenstadt","group":"ZNA","w3w":"linse.geld.bringen","lat":48.130242,"lon":11.558944},
-    {"name":"Kinderklinik Psych","group":"ZNA","w3w":"angedacht.ulmen.tannen","lat":48.114179,"lon":11.582708},
+    {"name":"Kinderklinik Psycho","group":"ZNA","w3w":"angedacht.ulmen.tannen","lat":48.114179,"lon":11.582708},
     {"name":"Neuperlach","group":"ZNA","w3w":"nicht.atem.worunter","lat":48.094909,"lon":11.655342},
     {"name":"Neuwittelsbach","group":"ZNA","w3w":"geschenkt.heben.eisbein","lat":48.157193,"lon":11.525804},
     {"name":"Pasing","group":"ZNA","w3w":"winkel.bürste.kosten","lat":48.143906,"lon":11.453463},
