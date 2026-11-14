@@ -1,8 +1,8 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 7,
-  "updated": "2026-11-13",
+  "rev": 8,
+  "updated": "2026-11-14",
   "items": [
     {"name":"Augustinum","group":"ZNA","w3w":"kurve.trinken.exzellentes","lat":48.122049,"lon":11.487464},
     {"name":"B 33","group":"ZNA","w3w":"baumhaus.ölig.verbunden","lat":48.09992,"lon":11.537,"note":"Moppeds JUH"},
@@ -15,6 +15,7 @@
     {"name":"Haar Stroke","group":"ZNA","w3w":"ausweg.pflegen.zwischen","lat":48.117198,"lon":11.746346},
     {"name":"Harlaching","group":"ZNA","w3w":"ehen.manche.testpilot","lat":48.086446,"lon":11.556827},
     {"name":"Herzzentrum","group":"ZNA","w3w":"erringen.weicher.duften","lat":48.152288,"lon":11.548759},
+    {"name":"Hohenbrunn","group":"ZNA","w3w":"gelbes.langer.tiere","lat":48.05486,"lon":11.67076},
     {"name":"Kinderklinik Innenstadt","group":"ZNA","w3w":"linse.geld.bringen","lat":48.130242,"lon":11.558944},
     {"name":"Kinderklinik Psycho","group":"ZNA","w3w":"angedacht.ulmen.tannen","lat":48.114179,"lon":11.582708},
     {"name":"Neuperlach","group":"ZNA","w3w":"nicht.atem.worunter","lat":48.094909,"lon":11.655342},
