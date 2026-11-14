@@ -1,7 +1,7 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 8,
+  "rev": 9,
   "updated": "2026-11-14",
   "items": [
     {"name":"Augustinum","group":"ZNA","w3w":"kurve.trinken.exzellentes","lat":48.122049,"lon":11.487464},
@@ -16,6 +16,7 @@
     {"name":"Harlaching","group":"ZNA","w3w":"ehen.manche.testpilot","lat":48.086446,"lon":11.556827},
     {"name":"Herzzentrum","group":"ZNA","w3w":"erringen.weicher.duften","lat":48.152288,"lon":11.548759},
     {"name":"Hohenbrunn","group":"ZNA","w3w":"gelbes.langer.tiere","lat":48.05486,"lon":11.67076},
+    {"name":"Home","group":"ZNA","w3w":"früh.wohnt.leiterin","lat":48.07491,"lon":11.67919,"note":"Zu Hause"},
     {"name":"Kinderklinik Innenstadt","group":"ZNA","w3w":"linse.geld.bringen","lat":48.130242,"lon":11.558944},
     {"name":"Kinderklinik Psycho","group":"ZNA","w3w":"angedacht.ulmen.tannen","lat":48.114179,"lon":11.582708},
     {"name":"Neuperlach","group":"ZNA","w3w":"nicht.atem.worunter","lat":48.094909,"lon":11.655342},
@@ -28,7 +29,6 @@
     {"name":"Rinecker","group":"ZNA","w3w":"heftig.mitgefühl.trinken","lat":48.103237,"lon":11.547985},
     {"name":"RK1","group":"ZNA","w3w":"vorzeitig.tante.unter","lat":48.154067,"lon":11.531503},
     {"name":"Schäftlarnstrasse 9","group":"ZNA","w3w":"kumpel.winkel.dieser","lat":48.11768,"lon":11.55792},
-    {"name":"Schwabing Kinder","group":"ZNA","w3w":"lebendig.schwarm.fernseher","lat":48.171855,"lon":11.581048},
-    {"name":"zu Hause","group":"ZNA","w3w":"früh.wohnt.leiterin","lat":48.07491,"lon":11.67919,"note":"Zu Hause"}
+    {"name":"Schwabing Kinder","group":"ZNA","w3w":"lebendig.schwarm.fernseher","lat":48.171855,"lon":11.581048}
   ]
 }
