@@ -1,9 +1,9 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 15,
+  "rev": 16,
   "updated": "2026-11-15",
-  "groups": ["ZNA","JUH / Dienst","Mopped","Pflegeheime","Privat","Sanitätsdienste"],
+  "groups": ["ZNA","JUH / Dienst","Privat","Mopped","Pflegeheime","Sanitätsdienste"],
   "items": [
     {"name":"B 33","group":"JUH / Dienst","w3w":"baumhaus.ölig.verbunden","lat":48.09992,"lon":11.537,"note":"Moppeds JUH"},
     {"name":"Feuerwache 4","group":"JUH / Dienst","w3w":"maus.lauter.teilen","lat":48.156007,"lon":11.555468},
