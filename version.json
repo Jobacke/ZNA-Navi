@@ -1,5 +1,5 @@
 {
-  "version": "1.10.1",
+  "version": "1.11.0",
   "date": "2026-11-15",
-  "notes": "Kachel: kleinerer Pfeil, what3words unten links, Gruppe unter der Entfernung"
+  "notes": "Hell/Dunkel/Automatisch; Rastersymbol vor der 3-Wort-Adresse"
 }

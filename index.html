@@ -18,7 +18,21 @@
     --bg:#0b1020; --panel:#141b2f; --panel2:#1b2440; --line:#2a3555;
     --text:#eef2fb; --muted:#93a0bf; --accent:#e0283c;
     --ok:#2ec27e; --warn:#f5a623; --blue:#33ccff; --addr:#1f6feb;
+    --w3w:#ff7a85; --gtag:#c9d2e8; --help:#c9d2e8; --warnbg:#3a2a08; --warntext:#ffd58a; --infobg:#0f2c4a; --infotext:#bfe3ff;
+    --dangertext:#ff8a95; --dangerline:#7a2430; --toastbg:#eef2fb; --toasttext:#0b1020; --wazego:#2a3555;
+    color-scheme:dark;
     --r:16px;
+  }
+  /* Heller Modus: Inhalt hell, Kopfbereich bleibt dunkel (passt zur Statusleiste des iPhones) */
+  html[data-theme="light"]{
+    --bg:#eef1f6; --panel:#ffffff; --panel2:#f2f4f8; --line:#d3d9e4; --text:#141a26; --muted:#5b6475;
+    --ok:#0f8a5c; --warn:#a86400; --blue:#0a6fb0; --w3w:#d1203a; --gtag:#36405a; --help:#2c3446;
+    --warnbg:#fff3d6; --warntext:#6b4400; --infobg:#e3f0fc; --infotext:#0b3a63; --dangertext:#c0283b; --dangerline:#e7a3ac;
+    --toastbg:#1b2233; --toasttext:#ffffff; --wazego:#7b8496; color-scheme:light;
+  }
+  html[data-theme="light"] header{
+    --bg:#0b1020; --panel:#141b2f; --panel2:#1b2440; --line:#2a3555; --text:#eef2fb; --muted:#93a0bf;
+    --infobg:#0f2c4a; --infotext:#bfe3ff; --dangertext:#ff8a95; --dangerline:#7a2430; color-scheme:dark;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--text);
@@ -34,7 +48,7 @@
   :root{--sat:env(safe-area-inset-top)}
   /* Kopf in Schwarz = gleiche Farbe wie die iOS-Statusleiste, kein sichtbarer Rand */
   html{background:#000}
-  header{position:relative;flex:none;z-index:10;background:#000;
+  header{position:relative;flex:none;z-index:10;background:#000;color:var(--text);
     padding:calc(var(--sat) + 10px) clamp(10px,3.5vw,14px) 10px;border-bottom:1px solid var(--line);min-width:0;max-width:100%}
   .bar{display:flex;align-items:center;gap:clamp(6px,2.4vw,10px);min-width:0}
   .bar > *{min-width:0}
@@ -66,13 +80,13 @@
   .navsel button.on{background:var(--text);color:var(--bg)}
   .navsel button .op{display:none;margin-left:5px;font-size:13px}
   .navsel button.on .op{display:inline}
-  .michint{margin-top:8px;padding:9px 12px;border-radius:10px;background:#0f2c4a;color:#bfe3ff;font-size:14px}
+  .michint{margin-top:8px;padding:9px 12px;border-radius:10px;background:var(--infobg);color:var(--infotext);font-size:14px}
   #btnMic.on{background:var(--addr);border-color:var(--addr);animation:pulse 1.2s infinite}
   @keyframes pulse{50%{opacity:.6}}
 
   .status{padding:8px 16px 0;color:var(--muted);font-size:13px;min-height:22px}
-  .banner{margin:10px 14px 0;padding:10px 12px;border-radius:12px;background:#3a2a08;color:#ffd58a;font-size:14px}
-  .banner.info{background:#0f2c4a;color:#bfe3ff}
+  .banner{margin:10px 14px 0;padding:10px 12px;border-radius:12px;background:var(--warnbg);color:var(--warntext);font-size:14px}
+  .banner.info{background:var(--infobg);color:var(--infotext)}
   .banner .row{margin-top:8px}
 
   main{padding:8px clamp(10px,3.5vw,14px);min-width:0;display:grid;gap:10px}
@@ -87,13 +101,16 @@
   .tile .name{grid-column:2;grid-row:1;font-size:16px;font-weight:700;line-height:1.25;overflow:hidden;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
   .tile .side{grid-column:3;grid-row:1;justify-self:end;white-space:nowrap}
+  .tile .ico2{grid-column:1;grid-row:2;justify-self:center;display:grid;place-items:center;width:20px;height:20px;color:var(--w3w)}
+  .tile .ico2 svg{width:18px;height:18px}
   .tile .meta{grid-column:1 / span 2;grid-row:2;display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;white-space:nowrap;color:var(--muted);font-size:13px;line-height:20px}
   .tile .side2{grid-column:3;grid-row:2;justify-self:end;white-space:nowrap;display:flex;align-items:center}
+  .tile .ico2 + .meta{grid-column:2}
   .tile .meta .w3w{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
   .tile .meta .info{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis}
   .tile .meta .w3w + .info::before{content:"· "}
-  .tile .w3w{color:#ff7a85}
-  .tile .gtag{font-size:12px;font-weight:600;color:#c9d2e8;border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:0 8px;line-height:18px}
+  .tile .w3w{color:var(--w3w)}
+  .tile .gtag{font-size:12px;font-weight:600;color:var(--gtag);border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:0 8px;line-height:18px}
   .tile .dist{color:var(--ok);font-weight:700;font-size:14px}
   .tile .warn{color:var(--warn)}
   .tile.top{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
@@ -101,7 +118,7 @@
   .tile.missing{opacity:.75;border-style:dashed}
   .tile.missing .go{background:#555d75}
   .tile.addr .go{background:var(--addr)}
-  .tile.waze .go{background:#2a3555}
+  .tile.waze .go{background:var(--wazego)}
   .tile .save{width:30px;height:28px;font-size:16px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;color:var(--muted);font-size:19px}
   .editing .tile .go{background:var(--panel2);border:1px solid var(--line)}
   .loading{color:var(--muted);font-size:14px;padding:6px 4px}
@@ -115,7 +132,7 @@
     padding:14px 20px;border-radius:999px;border:0;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer;display:none}
   .editing .fab{display:block}
   .endbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:9px 12px;border-radius:12px;
-    border:1px solid #7a2430;background:#2a0f14;color:#ff8a95;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none}
+    border:1px solid var(--dangerline);background:#2a0f14;color:var(--dangertext);font-weight:700;font-size:15px;cursor:pointer;text-decoration:none}
   .endbtn:active{background:#3d151c}
   .endbtn svg{width:18px;height:18px}
   .endbtn[hidden],.editing .endbtn{display:none}
@@ -123,7 +140,7 @@
   .btn{padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:600}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.ok{background:var(--ok);border-color:var(--ok);color:#04130b}
-  .btn.danger{background:transparent;border-color:#7a2430;color:#ff8a95}
+  .btn.danger{background:transparent;border-color:var(--dangerline);color:var(--dangertext)}
   .btn.small{padding:8px 12px;font-size:14px}
   .btn:disabled{opacity:.5}
   .row{display:flex;gap:8px;flex-wrap:wrap}
@@ -143,7 +160,7 @@
   .field:focus{border-color:var(--blue)}
   textarea.field{min-height:130px;resize:vertical;font-size:14px}
   .hint{font-size:13px;color:var(--muted);margin-top:6px}
-  .help{font-size:14px;color:#c9d2e8;background:var(--panel);border-radius:12px;padding:12px 14px;border:1px solid var(--line)}
+  .help{font-size:14px;color:var(--help);background:var(--panel);border-radius:12px;padding:12px 14px;border:1px solid var(--line)}
   .help ol{margin:6px 0 0;padding-left:20px}.help li{margin:4px 0}
   .help code{background:var(--panel2);padding:1px 5px;border-radius:5px;font-size:13px;word-break:break-all}
   .preview{font-size:14px;margin-top:8px}
@@ -151,7 +168,7 @@
   .tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px}
   .tag.new{background:#173d2a;color:#7ee2a8}.tag.upd{background:#13314a;color:#8fd3ff}.tag.miss{background:#3a2a08;color:#ffd58a}
 
-  .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;background:#eef2fb;color:#0b1020;
+  .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;background:var(--toastbg);color:var(--toasttext);
     padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s}
   .toast.show{opacity:1}
 </style>
@@ -309,6 +326,12 @@
     <div class="hint">Öffnet sich statt der Navi-App eine Webseite, die andere Variante wählen.</div>
 
     <h3>Darstellung</h3>
+    <label for="setTheme">Farbschema</label>
+    <select class="field" id="setTheme">
+      <option value="auto">Automatisch (wie iPhone-Einstellung)</option>
+      <option value="light">Hell</option>
+      <option value="dark">Dunkel</option>
+    </select>
     <label for="setTop">Abstand oben zur Statusleiste (Uhrzeit/Akku)</label>
     <select class="field" id="setTop">
       <option value="auto">Automatisch</option>
@@ -389,13 +412,13 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.10.1';
-const APP_DATE = '2026-11-12';
+const APP_VERSION = '1.11.0';
+const APP_DATE = '2026-11-15';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
 let canStore = true;
-const DEFAULTS = { topPad:'auto', blz:{ on:false, name:'Blitzer starten', gap:30, end:true, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
+const DEFAULTS = { theme:'auto', topPad:'auto', blz:{ on:false, name:'Blitzer starten', gap:30, end:true, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
   gh:{ token:'', repo:'Jobacke/ZNA-Navi', path:'zna.json', branch:'main', auto:true } };
 let state = { items:[], settings:{...DEFAULTS} };
 function load(){
@@ -613,6 +636,8 @@ function groups(){
 }
 const ICON_ARROW = '<svg viewBox="0 0 24 24"><path d="M12 3l7 17-7-4-7 4z" fill="#fff"/></svg>';
 const ICON_PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
+// Neutrales Rastersymbol für die 3-Wort-Adresse (bewusst nicht das what3words-Logo)
+const ICON_GRID = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18" stroke-width="1.4"/></svg>';
 const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>';
 
 function tileHTML(t){
@@ -620,7 +645,7 @@ function tileHTML(t){
     <div class="go">${t.icon}</div>
     <div class="name">${esc(t.name)}</div>
     <div class="side">${t.dist ? `<span class="dist">${t.dist}</span>` : ''}</div>
-    <div class="meta">${t.meta || ''}</div>
+    ${t.icon2 ? `<div class="ico2" aria-hidden="true">${t.icon2}</div>` : ''}<div class="meta">${t.meta || ''}</div>
     <div class="side2">${t.right || ''}</div></a>`;
 }
 function render(){
@@ -684,7 +709,7 @@ function render(){
         (i.note ? `<span class="info">${esc(i.note)}</span>` : '');
       return tileHTML({ cls: (top ? ' top' : '') + (ok ? '' : ' missing'), href: ok && !editing ? navUrl(i) : '#', attrs: `data-id="${esc(i.id)}"`,
         icon: editing || !ok ? ICON_PEN : ICON_ARROW, name: i.name, title: [i.name, i.group, info].filter(Boolean).join(' – '),
-        dist: (i._d != null && isFinite(i._d)) ? fmtDist(i._d) : '', meta, right: `<span class="gtag">${esc(i.group||'ZNA')}</span>` });
+        icon2: (ok && i.w3w) ? ICON_GRID : '', dist: (i._d != null && isFinite(i._d)) ? fmtDist(i._d) : '', meta, right: `<span class="gtag">${esc(i.group||'ZNA')}</span>` });
     }).join('');
   }
 
@@ -1208,6 +1233,7 @@ function openSettings(){
   $('#setLink').value = state.settings.linkMode;
   $('#setSort').value = state.settings.sort;
   $('#setTop').value = state.settings.topPad || 'auto';
+  $('#setTheme').value = state.settings.theme || 'auto';
   $('#setMic').value = state.settings.micMode || 'auto';
   $('#micSc').value = state.settings.micSc || '';
   $('#micScName').textContent = state.settings.micSc || 'ZNA Sprache';
@@ -1228,6 +1254,7 @@ function openSettings(){
 $('#setLink').onchange = e => { state.settings.linkMode = e.target.value; save(); render(); };
 $('#setMic').onchange = e => { state.settings.micMode = e.target.value; state.settings.srFailed = false; save(); };
 $('#micSc').onchange = e => { state.settings.micSc = e.target.value.trim(); $('#micScName').textContent = state.settings.micSc || 'ZNA Sprache'; save(); };
+$('#setTheme').onchange = e => { state.settings.theme = e.target.value; save(); applyTheme(); };
 $('#setTop').onchange = e => { state.settings.topPad = e.target.value; save(); fitHeader(); };
 $('#setSort').onchange = e => { state.settings.sort = e.target.value; save(); render(); };
 $('#setAutoSrv').onchange = e => { state.settings.autoSrv = e.target.checked; save(); };
@@ -1368,6 +1395,15 @@ function blzStateText(){
   return mins ? `Nächster Autostart frühestens nach ${mins} Min. Pause.` : 'Startet beim nächsten Öffnen.';
 }
 
+/* ---------- Farbschema ---------- */
+const mqLight = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : null;
+function applyTheme(){
+  const t = state.settings.theme || 'auto';
+  const mode = t === 'auto' ? (mqLight && mqLight.matches ? 'light' : 'dark') : t;
+  document.documentElement.dataset.theme = mode;
+}
+if(mqLight){ try{ mqLight.addEventListener('change', applyTheme); }catch(e){ try{ mqLight.addListener(applyTheme); }catch(e2){} } }
+
 /* ---------- Kopfzeile ---------- */
 // Manche iPhones melden im Vollbild keinen Abstand zur Statusleiste – dann selbst einen setzen
 function fitHeader(){
@@ -1387,6 +1423,7 @@ setTimeout(fitHeader, 500);
 
 /* ---------- Start ---------- */
 load();
+applyTheme();
 showVersion();
 fitHeader();
 updSync();
