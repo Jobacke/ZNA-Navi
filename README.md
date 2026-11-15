@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.9.1 | 2026-11-15 | Gruppen-Reiter unter „Fahrt beenden“, „Alle“ vorne, seitlich wischbar mit Verlauf als Hinweis |
 | 1.9.0 | 2026-11-15 | Gruppe im Editor als Auswahlliste, „Neue Gruppe“ mit Prüfung auf gleiche/ähnliche Namen |
 | 1.8.1 | 2026-11-15 | Knopf „Fahrt beenden“ oben im Kopfbereich, standardmäßig an |
 | 1.8.0 | 2026-11-15 | zna.json enthält zusätzlich `index` (Name/eindeutige Wortanfänge → Waze-Link) für den Kurzbefehl „Meine Route“ |

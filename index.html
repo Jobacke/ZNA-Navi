@@ -45,7 +45,14 @@
   .iconbtn.on{background:var(--accent);border-color:var(--accent)}
   .iconbtn svg{width:22px;height:22px}
 
-  .chips{display:flex;gap:8px;overflow-x:auto;min-width:0;margin-top:10px;scrollbar-width:none}
+  .chipwrap{position:relative;margin-top:10px;min-width:0}
+  .chips{display:flex;gap:8px;overflow-x:auto;min-width:0;scrollbar-width:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .chips .chip{scroll-snap-align:start}
+  /* Verlauf am Rand zeigt: hier geht es weiter */
+  .chipwrap::before,.chipwrap::after{content:"";position:absolute;top:0;bottom:0;width:28px;pointer-events:none;opacity:0;transition:opacity .2s}
+  .chipwrap::before{left:0;background:linear-gradient(90deg,#000,rgba(0,0,0,0))}
+  .chipwrap::after{right:0;background:linear-gradient(270deg,#000,rgba(0,0,0,0))}
+  .chipwrap.more-left::before,.chipwrap.more-right::after{opacity:1}
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;font-weight:600;font-size:15px}
   .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
@@ -157,7 +164,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
     </button>
   </div>
-  <div class="chips" id="chips"></div>
   <form class="searchwrap" id="searchForm" action="#" autocomplete="off">
     <input class="search" id="search" type="search" enterkeyhint="go" placeholder="Ziel oder Adresse …" autocomplete="off" autocorrect="off" spellcheck="false">
     <button type="button" class="iconbtn" id="btnMic" title="Adresse sprechen" aria-label="Adresse sprechen">
@@ -169,6 +175,7 @@
     <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps"><span class="lg">Google Maps</span><span class="sm">Google</span><span class="op">↗</span></button><button type="button" data-app="apple"><span class="lg">Apple Karten</span><span class="sm">Apple</span><span class="op">↗</span></button>
   </div>
   <a class="endbtn" id="endBtn" href="#" hidden><svg viewBox="0 0 24 24" fill="none" stroke="#ff5470" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>Fahrt beenden</a>
+  <div class="chipwrap"><div class="chips" id="chips"></div></div>
 </header>
 <div id="scroller">
 
@@ -374,7 +381,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.9.1';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -604,8 +611,14 @@ function render(){
   const gs = groups();
   let g = state.settings.group;
   if(g !== '__all' && !gs.includes(g)) g = state.settings.group = gs[0];
-  const chips = gs.length > 1 ? [...gs, '__all'] : gs;
-  $('#chips').innerHTML = chips.map(x => `<button class="chip${x===g?' on':''}" data-g="${esc(x)}">${x==='__all'?'Alle':esc(x)}</button>`).join('');
+  const chips = gs.length > 1 ? ['__all', ...gs] : gs;
+  const chipsKey = chips.join('|') + '#' + g;
+  if(render._chips !== chipsKey){
+    render._chips = chipsKey;
+    $('#chips').innerHTML = chips.map(x => `<button class="chip${x===g?' on':''}" data-g="${esc(x)}">${x==='__all'?'Alle':esc(x)}</button>`).join('');
+    const on = $('#chips .chip.on'); if(on) on.scrollIntoView({ block:'nearest', inline:'center' });
+    updChipFade();
+  }
   $('#groupList').innerHTML = gs.map(x=>`<option value="${esc(x)}">`).join('');
   document.querySelectorAll('#navSel button').forEach(b => b.classList.toggle('on', b.dataset.app === curApp()));
 
@@ -724,6 +737,13 @@ $('#navSel').addEventListener('click', e => {
   state.settings.navApp = app; save(); render();
   toast(`Routen mit ${APPS[app]} – nochmal antippen öffnet ${APPS[app]}`, 2600);
 });
+function updChipFade(){
+  const c = $('#chips'), w = c.parentElement;
+  w.classList.toggle('more-left', c.scrollLeft > 4);
+  w.classList.toggle('more-right', c.scrollLeft + c.clientWidth < c.scrollWidth - 4);
+}
+$('#chips').addEventListener('scroll', updChipFade, { passive:true });
+window.addEventListener('resize', updChipFade);
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
   state.settings.group = b.dataset.g; save(); render();
