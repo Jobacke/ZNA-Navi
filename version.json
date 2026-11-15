@@ -1,5 +1,5 @@
 {
-  "version": "1.9.2",
+  "version": "1.10.0",
   "date": "2026-11-15",
-  "notes": "Gruppe wird bei jedem Ziel klein angezeigt"
+  "notes": "Einheitliche Zielkacheln: gleiche Größe und Aufteilung für jedes Ziel"
 }

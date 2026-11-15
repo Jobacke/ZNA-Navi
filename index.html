@@ -77,25 +77,34 @@
 
   main{padding:8px clamp(10px,3.5vw,14px);min-width:0;display:grid;gap:10px}
   .sec{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.6px;margin:10px 2px 0}
-  .tile{display:flex;align-items:center;gap:clamp(10px,3.5vw,14px);padding:clamp(12px,4vw,16px);min-width:0;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);
-    text-decoration:none;color:var(--text);min-height:76px;cursor:pointer;position:relative;user-select:none;-webkit-user-select:none}
+  /* Einheitliche Kachel: feste Höhe, feste Plätze – Name (max. 2 Zeilen), rechts Entfernung, unten Gruppe/Adresse in einer Zeile */
+  .tile{display:grid;grid-template-columns:44px minmax(0,1fr) auto;grid-template-rows:1fr auto;column-gap:12px;row-gap:6px;
+    height:92px;padding:11px 14px;min-width:0;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);
+    text-decoration:none;color:var(--text);cursor:pointer;position:relative;user-select:none;-webkit-user-select:none}
   .tile:active{transform:scale(.985);background:var(--panel2)}
-  .tile .go{flex:none;width:46px;height:46px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
-  .tile .go svg{width:24px;height:24px}
-  .tile .txt{flex:1;min-width:0}
-  .tile .name{font-size:clamp(16px,5vw,19px);font-weight:700;line-height:1.2;overflow-wrap:anywhere}
-  .tile .sub{color:var(--muted);font-size:14px;margin-top:3px;display:flex;gap:6px 8px;flex-wrap:wrap;align-items:center}
+  .tile .go{grid-column:1;grid-row:1 / span 2;align-self:center;width:44px;height:44px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
+  .tile .go svg{width:22px;height:22px}
+  .tile .name{grid-column:2;grid-row:1;align-self:end;font-size:16px;font-weight:700;line-height:1.25;overflow:hidden;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+  .tile .side{grid-column:3;grid-row:1;align-self:start;justify-self:end;white-space:nowrap}
+  .tile .side.star{grid-row:1 / span 2;align-self:center}
+  .tile .meta{grid-column:2 / span 2;grid-row:2;display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;white-space:nowrap;color:var(--muted);font-size:13px;line-height:20px}
+  .tile .side.star ~ .meta{grid-column:2}
+  .tile .meta > *{flex:none}
+  .tile .meta .w3w{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .tile .meta .info{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .tile .meta .w3w + .info::before{content:"· "}
   .tile .w3w{color:#ff7a85}
-  .tile .gtag{font-size:12px;font-weight:600;color:#c9d2e8;border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:0 8px;line-height:20px;white-space:nowrap}
-  .tile .dist{color:var(--ok);font-weight:600}
+  .tile .gtag{font-size:12px;font-weight:600;color:#c9d2e8;border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:0 8px;line-height:18px}
+  .tile .dist{color:var(--ok);font-weight:700;font-size:14px}
+  .tile .warn{color:var(--warn)}
   .tile.top{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
   .tile.top::after{content:"Nächstes Ziel";position:absolute;top:-9px;right:14px;background:var(--ok);color:#04130b;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
   .tile.missing{opacity:.75;border-style:dashed}
   .tile.missing .go{background:#555d75}
   .tile.addr .go{background:var(--addr)}
-  .tile.addr .name{font-size:17px}
   .tile.waze .go{background:#2a3555}
-  .tile .save{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;color:var(--muted);font-size:20px}
+  .tile .save{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;color:var(--muted);font-size:19px}
   .editing .tile .go{background:var(--panel2);border:1px solid var(--line)}
   .loading{color:var(--muted);font-size:14px;padding:6px 4px}
   .back{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:700;font-size:17px;cursor:pointer}
@@ -382,7 +391,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.9.2';
+const APP_VERSION = '1.10.0';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -608,6 +617,13 @@ const ICON_ARROW = '<svg viewBox="0 0 24 24"><path d="M12 3l7 17-7-4-7 4z" fill=
 const ICON_PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>';
 
+function tileHTML(t){
+  return `<a class="tile${t.cls || ''}" href="${esc(t.href || '#')}" ${t.attrs || ''}${t.title ? ` title="${esc(t.title)}"` : ''}>
+    <div class="go">${t.icon}</div>
+    <div class="name">${esc(t.name)}</div>
+    ${t.star ? `<div class="side star">${t.star}</div>` : `<div class="side">${t.dist ? `<span class="dist">${t.dist}</span>` : ''}</div>`}
+    <div class="meta">${t.meta || ''}</div></a>`;
+}
 function render(){
   const gs = groups();
   let g = state.settings.group;
@@ -663,17 +679,14 @@ function render(){
     html += items.map((i, idx) => {
       const ok = hasCoords(i);
       const top = byDistance && pos && idx===0 && ok && !editing && !q;
-      const sub = [
-        `<span class="gtag">${esc(i.group||'ZNA')}</span>`,
-        i.w3w ? `<span class="w3w">///${esc(i.w3w)}</span>` : '',
-        (i._d!=null && isFinite(i._d)) ? `<span class="dist">${fmtDist(i._d)}</span>` : '',
-        !ok ? '<span style="color:var(--warn)">Koordinaten fehlen</span>' : '',
-        i.note ? `<span>${esc(i.note)}</span>` : ''
-      ].filter(Boolean).join('');
-      const href = ok && !editing ? navUrl(i) : '#';
-      return `<a class="tile${top?' top':''}${ok?'':' missing'}" href="${esc(href)}" data-id="${esc(i.id)}">
-        <div class="go">${editing||!ok ? ICON_PEN : ICON_ARROW}</div>
-        <div class="txt"><div class="name">${esc(i.name)}</div><div class="sub">${sub}</div></div></a>`;
+      const info = [i.w3w ? '///' + i.w3w : '', i.note || ''].filter(Boolean).join(' · ');
+      const meta = `<span class="gtag">${esc(i.group||'ZNA')}</span>` +
+        (!ok ? '<span class="warn">Koordinaten fehlen</span>' : '') +
+        (i.w3w ? `<span class="w3w">///${esc(i.w3w)}</span>` : '') +
+        (i.note ? `<span class="info">${esc(i.note)}</span>` : '');
+      return tileHTML({ cls: (top ? ' top' : '') + (ok ? '' : ' missing'), href: ok && !editing ? navUrl(i) : '#', attrs: `data-id="${esc(i.id)}"`,
+        icon: editing || !ok ? ICON_PEN : ICON_ARROW, name: i.name, title: [i.name, i.group, info].filter(Boolean).join(' – '),
+        dist: (i._d != null && isFinite(i._d)) ? fmtDist(i._d) : '', meta });
     }).join('');
   }
 
@@ -683,20 +696,17 @@ function render(){
     else if(addr.status === 'error') html += `<div class="loading">${esc(addr.err)}</div>`;
     else{
       if(addr.w3wOnly){
-        html += `<a class="tile addr" href="https://what3words.com/${esc(encodeURIComponent(addr.w3wOnly))}" target="_blank" rel="noopener">
-          <div class="go">${ICON_ARROW}</div><div class="txt"><div class="name">///${esc(addr.w3wOnly)}</div><div class="sub">In what3words öffnen (ohne API-Schlüssel keine direkte Umrechnung)</div></div></a>`;
+        html += tileHTML({ cls: ' addr', href: `https://what3words.com/${encodeURIComponent(addr.w3wOnly)}`, attrs: 'target="_blank" rel="noopener"',
+          icon: ICON_ARROW, name: '///' + addr.w3wOnly, meta: '<span class="info">In what3words öffnen (ohne API-Schlüssel keine Umrechnung)</span>' });
       }
       if(!addr.results.length && !addr.w3wOnly) html += `<div class="loading">Keine Adresse gefunden.</div>`;
-      html += addr.results.map((r, idx) => {
-        const d = pos ? `<span class="dist">${fmtDist(haversine(pos, r))}</span>` : '';
-        return `<a class="tile addr" href="${esc(navUrl(r))}" data-addr="${idx}">
-          <div class="go">${ICON_ARROW}</div>
-          <div class="txt"><div class="name">${esc(r.label)}</div><div class="sub">${r.sub?`<span>${esc(r.sub)}</span>`:''}${d}</div></div>
-          <span class="save" role="button" data-save="${idx}" aria-label="Als Ziel speichern" title="Als Ziel speichern">☆</span></a>`;
-      }).join('');
+      html += addr.results.map((r, idx) => tileHTML({ cls: ' addr', href: navUrl(r), attrs: `data-addr="${idx}"`, icon: ICON_ARROW, name: r.label,
+        title: [r.label, r.sub].filter(Boolean).join(' – '),
+        meta: (pos ? `<span class="dist">${fmtDist(haversine(pos, r))}</span>` : '') + (r.sub ? `<span class="info">${esc(r.sub)}</span>` : ''),
+        star: `<span class="save" role="button" data-save="${idx}" aria-label="Als Ziel speichern" title="Als Ziel speichern">☆</span>` })).join('');
     }
-    html += `<a class="tile waze" href="${esc(navSearchUrl(query.trim()))}">
-      <div class="go">${ICON_SEARCH}</div><div class="txt"><div class="name">In ${APPS[curApp()]} suchen</div><div class="sub"><span>„${esc(query.trim())}“ – falls oben nicht dabei</span></div></div></a>`;
+    html += tileHTML({ cls: ' waze', href: navSearchUrl(query.trim()), icon: ICON_SEARCH, name: `In ${APPS[curApp()]} suchen`,
+      meta: `<span class="info">„${esc(query.trim())}“ – falls oben nicht dabei</span>` });
   }else if(!items.length){
     html += `<div class="empty">Keine Treffer.</div>`;
   }
