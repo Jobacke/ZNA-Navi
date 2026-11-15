@@ -190,8 +190,10 @@
     <h2><span id="edTitle">Ziel</span><button class="btn small" data-close>Schließen</button></h2>
     <label for="edName">Name</label>
     <input class="field" id="edName" placeholder="z. B. Großhadern">
-    <label for="edGroup">Gruppe</label>
-    <input class="field" id="edGroup" list="groupList" placeholder="ZNA">
+    <label for="edGroupSel">Gruppe</label>
+    <select class="field" id="edGroupSel"></select>
+    <input class="field" id="edGroup" placeholder="Name der neuen Gruppe" hidden style="margin-top:8px" autocapitalize="words">
+    <div class="michint" id="edGroupHint" hidden></div>
     <datalist id="groupList"></datalist>
     <label for="edW3w">what3words-Adresse</label>
     <input class="field" id="edW3w" placeholder="///wort.wort.wort" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -372,7 +374,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '1.9.0';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -832,7 +834,7 @@ function openEditor(it, pre){
   const src = it || pre || {};
   $('#edTitle').textContent = it ? 'Ziel bearbeiten' : 'Neues Ziel';
   $('#edName').value = src.name || '';
-  $('#edGroup').value = it?.group || (pre ? 'Eigene' : (state.settings.group !== '__all' ? state.settings.group : 'ZNA'));
+  fillGroupSelect(it?.group || (state.settings.group !== '__all' ? state.settings.group : groups()[0]));
   $('#edW3w').value = src.w3w ? '///' + src.w3w : '';
   $('#edCoords').value = hasCoords(src) ? `${(+src.lat).toFixed(6)}, ${(+src.lon).toFixed(6)}` : '';
   $('#edNote').value = src.note || '';
@@ -842,6 +844,55 @@ function openEditor(it, pre){
   updW3wLink();
   $('#ovEdit').classList.add('show');
   if(!it && !pre) setTimeout(()=>$('#edName').focus(), 50);
+}
+/* Gruppen: Auswahl aus vorhandenen, neue nur nach Ähnlichkeitsprüfung */
+const NEW_GROUP = '__new';
+const normGroup = g => String(g).toLowerCase().replace(/ß/g, 'ss').replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/[^a-z0-9]/g, '');
+function lev(a, b){
+  const m = a.length, n = b.length; if(!m) return n; if(!n) return m;
+  let prev = Array.from({length: n + 1}, (_, j) => j);
+  for(let i = 1; i <= m; i++){ const cur = [i]; for(let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1)); prev = cur; }
+  return prev[n];
+}
+function similarGroups(name){
+  const v = normGroup(name); if(!v) return { exact: null, similar: [] };
+  const gs = groups();
+  const exact = gs.find(g => normGroup(g) === v) || null;
+  const similar = gs.filter(g => { const x = normGroup(g); return x !== v && (lev(x, v) <= Math.max(1, Math.floor(Math.min(x.length, v.length) / 4)) || (v.length >= 3 && (x.includes(v) || v.includes(x)))); });
+  return { exact, similar };
+}
+let groupOk = '', groupMsg = '';   // neuer Gruppenname, den der Nutzer trotz Ähnlichkeit bestätigt hat
+function fillGroupSelect(current){
+  const gs = groups(), sel = $('#edGroupSel');
+  sel.innerHTML = gs.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('') + `<option value="${NEW_GROUP}">＋ Neue Gruppe …</option>`;
+  sel.value = gs.includes(current) ? current : gs[0];
+  $('#edGroup').value = ''; $('#edGroup').hidden = true; $('#edGroupHint').hidden = true; groupOk = '';
+}
+$('#edGroupSel').addEventListener('change', e => {
+  const isNew = e.target.value === NEW_GROUP;
+  $('#edGroup').hidden = !isNew; $('#edGroupHint').hidden = true; groupOk = '';
+  if(isNew) setTimeout(() => $('#edGroup').focus(), 50);
+});
+$('#edGroup').addEventListener('input', () => { $('#edGroupHint').hidden = true; groupOk = ''; });
+// Liefert den Gruppennamen oder null, wenn erst eine Rückfrage beantwortet werden muss
+function resolveGroup(){
+  const sel = $('#edGroupSel').value; groupMsg = '';
+  if(sel !== NEW_GROUP) return sel;
+  const v = $('#edGroup').value.trim().replace(/\s+/g, ' ');
+  if(!v){ toast('Bitte einen Namen für die neue Gruppe eingeben'); $('#edGroup').focus(); return null; }
+  const { exact, similar } = similarGroups(v);
+  if(exact){ groupMsg = `Gespeichert in vorhandener Gruppe „${exact}“`; return exact; }
+  if(similar.length && groupOk !== v){
+    const h = $('#edGroupHint');
+    h.innerHTML = `Es gibt schon ähnliche Gruppen. Meintest du: ` +
+      similar.map(g => `<button type="button" class="btn small" data-pick="${esc(g)}" style="margin:6px 6px 0 0">${esc(g)}</button>`).join('') +
+      `<br><button type="button" class="btn small" id="grpForce" style="margin-top:6px">„${esc(v)}“ trotzdem neu anlegen</button>`;
+    h.hidden = false;
+    h.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { fillGroupSelect(b.dataset.pick); });
+    $('#grpForce').onclick = () => { groupOk = v; h.hidden = true; $('#edSave').click(); };
+    return null;
+  }
+  return v;
 }
 function updSrvHint(){
   $('#edSrvHint').textContent = ghOn()
@@ -891,7 +942,8 @@ $('#edSave').onclick = () => {
   if(!name) return toast('Bitte einen Namen eingeben');
   if(cRaw && !c) return toast('Koordinaten nicht erkannt – Format: 48.123456, 11.654321', 3500);
   if($('#edW3w').value.trim() && !w3w) return toast('what3words-Adresse nicht erkannt');
-  const data = { name, group: $('#edGroup').value.trim() || 'ZNA', w3w, note: $('#edNote').value.trim() };
+  const group = resolveGroup(); if(!group) return;
+  const data = { name, group, w3w, note: $('#edNote').value.trim() };
   if(c){ data.lat = c.lat; data.lon = c.lon; } else { data.lat = undefined; data.lon = undefined; }
   if(edItem) Object.assign(edItem, data);
   else state.items.push({ id: uid(), uses:0, ...data });
@@ -899,7 +951,7 @@ $('#edSave').onclick = () => {
   save(); closeAll();
   if(query.trim()) clearSearch(); else render();
   scheduleUpload();
-  toast(!c ? 'Gespeichert – Koordinaten fehlen noch' : (edFromAddr ? `Gespeichert in Gruppe „${data.group}“` : 'Gespeichert'), 2500);
+  toast(!c ? 'Gespeichert – Koordinaten fehlen noch' : (groupMsg || (edFromAddr ? `Gespeichert in Gruppe „${data.group}“` : 'Gespeichert')), 2800);
 };
 $('#edDelete').onclick = () => {
   if(!edItem) return;

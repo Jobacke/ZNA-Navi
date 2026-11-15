@@ -1,5 +1,5 @@
 {
-  "version": "1.8.1",
+  "version": "1.9.0",
   "date": "2026-11-15",
-  "notes": "„Fahrt beenden“ jetzt gut sichtbar oben unter dem Suchfeld, standardmäßig eingeschaltet"
+  "notes": "Gruppen als Auswahlliste; neue Gruppen werden auf ähnliche Namen geprüft"
 }
