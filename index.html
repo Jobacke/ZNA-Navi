@@ -416,7 +416,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.13.0';
 const APP_DATE = '2026-11-15';
 
 /* ---------- Speicher ---------- */
@@ -641,6 +641,18 @@ function groups(){
   const ord = groupOrderOf(), pos = g => { const i = ord.indexOf(g); return i < 0 ? 1e6 : i; };
   return [...s].sort((a,b) => pos(a) - pos(b) || a.localeCompare(b,'de'));
 }
+/* Gruppenauswahl: mehrere gleichzeitig möglich, leer = Alle */
+function selGroups(){
+  let sel = state.settings.sel;
+  if(!Array.isArray(sel)){ const g = state.settings.group; sel = (!g || g === '__all') ? [] : [g]; }
+  const gs = groups();
+  sel = gs.filter(x => sel.includes(x));            // in Knopf-Reihenfolge, verschwundene Gruppen raus
+  return (gs.length > 1 && sel.length === gs.length) ? [] : sel;
+}
+function setSel(arr){
+  state.settings.sel = arr;
+  state.settings.group = arr.length === 1 ? arr[0] : '__all';
+}
 function setGroupOrder(order){
   const before = groups().join('|');
   state.settings.groupOrder = order;
@@ -672,14 +684,14 @@ function tileHTML(t){
 }
 function render(){
   const gs = groups();
-  let g = state.settings.group;
-  if(g !== '__all' && !gs.includes(g)) g = state.settings.group = gs[0];
+  const sel = selGroups();
+  const isOn = x => x === '__all' ? !sel.length : (sel.includes(x) || (gs.length === 1 && !sel.length));
   const chips = gs.length > 1 ? ['__all', ...gs] : gs;
-  const chipsKey = chips.join('|') + '#' + g;
+  const chipsKey = chips.join('|') + '#' + sel.join('|');
   if(render._chips !== chipsKey){
     render._chips = chipsKey;
     const keep = render._keepScroll ? $('#chips').scrollLeft : null; render._keepScroll = false;
-    $('#chips').innerHTML = chips.map(x => `<button class="chip${x===g?' on':''}" data-g="${esc(x)}">${x==='__all'?'Alle':esc(x)}</button>`).join('');
+    $('#chips').innerHTML = chips.map(x => `<button class="chip${isOn(x)?' on':''}" data-g="${esc(x)}">${x==='__all'?'Alle':esc(x)}</button>`).join('');
     if(keep !== null) $('#chips').scrollLeft = keep;
     else{ const on = $('#chips .chip.on'); if(on) on.scrollIntoView({ block:'nearest', inline:'center' }); }
     updChipFade();
@@ -689,7 +701,7 @@ function render(){
 
   const q = query.trim().toLowerCase();
   // Beim Suchen alle Gruppen durchsuchen
-  let items = state.items.filter(i => (q || g==='__all' || (i.group||'ZNA')===g) &&
+  let items = state.items.filter(i => (q || !sel.length || sel.includes(i.group||'ZNA')) &&
     (!q || [i.name,i.w3w,i.note,i.group].join(' ').toLowerCase().includes(q)));
 
   if(byDistance && pos){
@@ -804,7 +816,11 @@ $('#chips').addEventListener('scroll', updChipFade, { passive:true });
 window.addEventListener('resize', updChipFade);
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
-  state.settings.group = b.dataset.g; save(); render();
+  const g = b.dataset.g, sel = selGroups();
+  // „Alle“ setzt zurück, sonst Gruppe an-/abwählen (mehrere gleichzeitig möglich)
+  if(g === '__all') setSel([]);
+  else setSel(sel.includes(g) ? sel.filter(x => x !== g) : [...sel, g]);
+  render._keepScroll = true; save(); render();
 });
 /* Gruppen umsortieren: lange drücken, dann nach links/rechts schieben */
 (function chipSort(){
@@ -976,7 +992,7 @@ function openEditor(it, pre){
   const src = it || pre || {};
   $('#edTitle').textContent = it ? 'Ziel bearbeiten' : 'Neues Ziel';
   $('#edName').value = src.name || '';
-  fillGroupSelect(it?.group || (state.settings.group !== '__all' ? state.settings.group : groups()[0]));
+  fillGroupSelect(it?.group || selGroups()[0] || groups()[0]);
   $('#edW3w').value = src.w3w ? '///' + src.w3w : '';
   $('#edCoords').value = hasCoords(src) ? `${(+src.lat).toFixed(6)}, ${(+src.lon).toFixed(6)}` : '';
   $('#edNote').value = src.note || '';
@@ -1089,7 +1105,7 @@ $('#edSave').onclick = () => {
   if(c){ data.lat = c.lat; data.lon = c.lon; } else { data.lat = undefined; data.lon = undefined; }
   if(edItem) Object.assign(edItem, data);
   else state.items.push({ id: uid(), uses:0, ...data });
-  if(state.settings.group !== '__all' && !edFromAddr) state.settings.group = data.group;
+  { const sel = selGroups(); if(sel.length && !sel.includes(data.group) && !edFromAddr) setSel([...sel, data.group]); }
   save(); closeAll();
   if(query.trim()) clearSearch(); else render();
   scheduleUpload();
@@ -1147,7 +1163,7 @@ function adoptItems(list){
   // Neue Liste übernehmen, IDs und Nutzungszähler bleiben erhalten
   const byKey = new Map(state.items.map(i => [keyOf(i), i]));
   state.items = list.map(f => { const l = byKey.get(keyOf(f)); return { id:l?.id || uid(), uses:l?.uses || 0, lastUsed:l?.lastUsed, ...clean(f) }; });
-  if(state.settings.group !== '__all' && !state.items.some(i => (i.group||'ZNA') === state.settings.group)) state.settings.group = state.items[0]?.group || 'ZNA';
+  setSel(selGroups());
 }
 function parseList(d){
   const items = (d.items||[]).filter(x => x && x.name && (x.w3w || hasCoords(x))).map(clean);
@@ -1343,7 +1359,7 @@ function openSettings(){
   $('#blzGap').value = String(+blz().gap || 0);
   $('#blzState').textContent = blzStateText();
   $('#blzName').value = blz().name || '';
-  if(state.settings.group && state.settings.group !== '__all') $('#impGroup').value = state.settings.group;
+  if(selGroups()[0]) $('#impGroup').value = selGroups()[0];
   $('#ovSet').classList.add('show');
 }
 $('#setLink').onchange = e => { state.settings.linkMode = e.target.value; save(); render(); };
@@ -1409,7 +1425,7 @@ $('#impDo').onclick = () => {
       added++;
     }
   }
-  if(pending[0]) state.settings.group = pending[0].r.group;
+  if(pending[0]) setSel([pending[0].r.group]);
   pending = []; $('#impOut').innerHTML = ''; $('#impText').value = ''; $('#impDo').disabled = true;
   save(); closeAll(); render();
   toast(`${added} neu, ${upd} aktualisiert`);
