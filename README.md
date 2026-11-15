@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.7.2 | 2026-11-15 | Siri-Kurzbefehl heißt jetzt „Route“, Frage „Welches Ziel?“ (Anleitung in der App angepasst) |
 | 1.7.1 | 2026-11-12 | Mikrofon-Modus Siri-Kurzbefehl; Home-Bildschirm-App überspringt die (von Apple gesperrte) Spracherkennung |
 | 1.7.0 | 2026-11-12 | Mikrofon: Live-Text im Suchfeld, Auto-Stopp nach Sprechpause, automatischer Wechsel zum Tastatur-Diktat |
 | 1.6.5 | 2026-11-12 | „Extra Abstand“ vergrößert (unter den iOS-Statusleisten-Schleier) |

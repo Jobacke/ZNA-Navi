@@ -1,5 +1,5 @@
 {
-  "version": "1.7.1",
-  "date": "2026-11-12",
-  "notes": "Mikrofon: Siri-Kurzbefehl-Modus (1× tippen, sprechen, losfahren); im Home-Bildschirm sofort Tastatur-Diktat statt Fehlversuch"
+  "version": "1.7.2",
+  "date": "2026-11-15",
+  "notes": "Siri-Anleitung auf „Hey Siri, Route“ / „Welches Ziel?“ umgestellt"
 }

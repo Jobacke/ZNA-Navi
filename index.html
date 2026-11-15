@@ -325,19 +325,19 @@
     </select>
     <div class="hint">Der Standort wird bei jedem Öffnen ermittelt – das nächste Ziel steht oben. Ein Tipp auf das Fadenkreuz schaltet vorübergehend auf die hier gewählte Sortierung um.</div>
 
-    <h3>Adresse per Siri</h3>
+    <h3>Siri: „Route“</h3>
     <div class="help">
-      Kurzbefehle-App → neuer Kurzbefehl, Name z. B. <b>„Navi Adresse“</b>:
+      <b>„Hey Siri, Route“</b> (oder am Helm Siri-Taste halten → „Route“) → Siri fragt <b>„Welches Ziel?“</b> → Zielnamen sagen → Waze fährt los.
       <ol>
-        <li>Aktion <b>„Nach Eingabe fragen“</b> (Text, Frage: „Wohin?“)</li>
-        <li>Aktion <b>„URL codieren“</b> (Eingabe: „Angefragte Eingabe“)</li>
-        <li>Aktion <b>„URL öffnen“</b>: <code>https://zna.vjbackhaus.de/?q=</code> + „Codierte URL“</li>
+        <li>Der Kurzbefehl heißt <b>Route</b> und fragt mit <b>„Welches Ziel?“</b>.</li>
+        <li>Er lädt die Zielliste direkt von <code>zna.vjbackhaus.de/zna.json</code> – neue Ziele aus der Serverliste kennt er sofort.</li>
+        <li>Es zählt der <b>Anfang</b> des Namens („beginnt mit“). Kurze, eindeutige Namen funktionieren am besten.</li>
       </ol>
-      „Hey Siri, Navi Adresse“ → Adresse sagen → Treffer antippen → Waze fährt los.
+      Ein Ziel, das nur auf diesem Handy gespeichert ist, kennt Siri erst nach dem Hochladen zum Server.
     </div>
 
     <h3>Einzelnes Ziel per Siri</h3>
-    <div class="help">Ziel bearbeiten → <b>Waze-Link kopieren</b> → in Kurzbefehle-App Aktion <b>„URL öffnen“</b> mit diesem Link → Kurzbefehl benennen (z. B. „ZNA Harlaching“).</div>
+    <div class="help">Ziel bearbeiten → <b>Waze-Link kopieren</b> → in Kurzbefehle-App Aktion <b>„URL öffnen“</b> mit diesem Link → Kurzbefehl benennen (z. B. „Route Harlaching“).</div>
 
     <h3>Import</h3>
     <label for="impGroup">Gruppe für importierte Ziele</label>
@@ -372,7 +372,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
