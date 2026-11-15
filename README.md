@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.10.1 | 2026-11-15 | Kachel-Feinschliff: kleiner Pfeil, what3words bündig darunter, Gruppe bündig unter km |
 | 1.10.0 | 2026-11-15 | Einheitliche Kacheln (feste Höhe; Name max. 2 Zeilen, Entfernung rechts oben, Gruppe + Adresse unten) |
 | 1.9.2 | 2026-11-15 | Gruppen-Etikett in jeder Zielkachel |
 | 1.9.1 | 2026-11-15 | Gruppen-Reiter unter „Fahrt beenden“, „Alle“ vorne, seitlich wischbar mit Verlauf als Hinweis |

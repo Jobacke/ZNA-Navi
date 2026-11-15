@@ -1,5 +1,5 @@
 {
-  "version": "1.10.0",
+  "version": "1.10.1",
   "date": "2026-11-15",
-  "notes": "Einheitliche Zielkacheln: gleiche Größe und Aufteilung für jedes Ziel"
+  "notes": "Kachel: kleinerer Pfeil, what3words unten links, Gruppe unter der Entfernung"
 }

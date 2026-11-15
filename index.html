@@ -77,20 +77,18 @@
 
   main{padding:8px clamp(10px,3.5vw,14px);min-width:0;display:grid;gap:10px}
   .sec{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.6px;margin:10px 2px 0}
-  /* Einheitliche Kachel: feste Höhe, feste Plätze – Name (max. 2 Zeilen), rechts Entfernung, unten Gruppe/Adresse in einer Zeile */
-  .tile{display:grid;grid-template-columns:44px minmax(0,1fr) auto;grid-template-rows:1fr auto;column-gap:12px;row-gap:6px;
-    height:92px;padding:11px 14px;min-width:0;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);
+  /* Einheitliche Kachel: oben Pfeil · Name · km – unten what3words (bündig unter dem Pfeil) · Gruppe (bündig unter km) */
+  .tile{display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-rows:1fr auto;column-gap:10px;row-gap:8px;align-items:center;
+    height:92px;padding:12px 14px;min-width:0;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);
     text-decoration:none;color:var(--text);cursor:pointer;position:relative;user-select:none;-webkit-user-select:none}
   .tile:active{transform:scale(.985);background:var(--panel2)}
-  .tile .go{grid-column:1;grid-row:1 / span 2;align-self:center;width:44px;height:44px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
-  .tile .go svg{width:22px;height:22px}
-  .tile .name{grid-column:2;grid-row:1;align-self:end;font-size:16px;font-weight:700;line-height:1.25;overflow:hidden;
+  .tile .go{grid-column:1;grid-row:1;width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
+  .tile .go svg{width:16px;height:16px}
+  .tile .name{grid-column:2;grid-row:1;font-size:16px;font-weight:700;line-height:1.25;overflow:hidden;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
-  .tile .side{grid-column:3;grid-row:1;align-self:start;justify-self:end;white-space:nowrap}
-  .tile .side.star{grid-row:1 / span 2;align-self:center}
-  .tile .meta{grid-column:2 / span 2;grid-row:2;display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;white-space:nowrap;color:var(--muted);font-size:13px;line-height:20px}
-  .tile .side.star ~ .meta{grid-column:2}
-  .tile .meta > *{flex:none}
+  .tile .side{grid-column:3;grid-row:1;justify-self:end;white-space:nowrap}
+  .tile .meta{grid-column:1 / span 2;grid-row:2;display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;white-space:nowrap;color:var(--muted);font-size:13px;line-height:20px}
+  .tile .side2{grid-column:3;grid-row:2;justify-self:end;white-space:nowrap;display:flex;align-items:center}
   .tile .meta .w3w{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
   .tile .meta .info{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis}
   .tile .meta .w3w + .info::before{content:"· "}
@@ -104,7 +102,7 @@
   .tile.missing .go{background:#555d75}
   .tile.addr .go{background:var(--addr)}
   .tile.waze .go{background:#2a3555}
-  .tile .save{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;color:var(--muted);font-size:19px}
+  .tile .save{width:30px;height:28px;font-size:16px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;color:var(--muted);font-size:19px}
   .editing .tile .go{background:var(--panel2);border:1px solid var(--line)}
   .loading{color:var(--muted);font-size:14px;padding:6px 4px}
   .back{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:700;font-size:17px;cursor:pointer}
@@ -391,7 +389,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.10.1';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -621,8 +619,9 @@ function tileHTML(t){
   return `<a class="tile${t.cls || ''}" href="${esc(t.href || '#')}" ${t.attrs || ''}${t.title ? ` title="${esc(t.title)}"` : ''}>
     <div class="go">${t.icon}</div>
     <div class="name">${esc(t.name)}</div>
-    ${t.star ? `<div class="side star">${t.star}</div>` : `<div class="side">${t.dist ? `<span class="dist">${t.dist}</span>` : ''}</div>`}
-    <div class="meta">${t.meta || ''}</div></a>`;
+    <div class="side">${t.dist ? `<span class="dist">${t.dist}</span>` : ''}</div>
+    <div class="meta">${t.meta || ''}</div>
+    <div class="side2">${t.right || ''}</div></a>`;
 }
 function render(){
   const gs = groups();
@@ -680,13 +679,12 @@ function render(){
       const ok = hasCoords(i);
       const top = byDistance && pos && idx===0 && ok && !editing && !q;
       const info = [i.w3w ? '///' + i.w3w : '', i.note || ''].filter(Boolean).join(' · ');
-      const meta = `<span class="gtag">${esc(i.group||'ZNA')}</span>` +
-        (!ok ? '<span class="warn">Koordinaten fehlen</span>' : '') +
+      const meta = (!ok ? '<span class="warn">Koordinaten fehlen</span>' : '') +
         (i.w3w ? `<span class="w3w">///${esc(i.w3w)}</span>` : '') +
         (i.note ? `<span class="info">${esc(i.note)}</span>` : '');
       return tileHTML({ cls: (top ? ' top' : '') + (ok ? '' : ' missing'), href: ok && !editing ? navUrl(i) : '#', attrs: `data-id="${esc(i.id)}"`,
         icon: editing || !ok ? ICON_PEN : ICON_ARROW, name: i.name, title: [i.name, i.group, info].filter(Boolean).join(' – '),
-        dist: (i._d != null && isFinite(i._d)) ? fmtDist(i._d) : '', meta });
+        dist: (i._d != null && isFinite(i._d)) ? fmtDist(i._d) : '', meta, right: `<span class="gtag">${esc(i.group||'ZNA')}</span>` });
     }).join('');
   }
 
@@ -702,8 +700,8 @@ function render(){
       if(!addr.results.length && !addr.w3wOnly) html += `<div class="loading">Keine Adresse gefunden.</div>`;
       html += addr.results.map((r, idx) => tileHTML({ cls: ' addr', href: navUrl(r), attrs: `data-addr="${idx}"`, icon: ICON_ARROW, name: r.label,
         title: [r.label, r.sub].filter(Boolean).join(' – '),
-        meta: (pos ? `<span class="dist">${fmtDist(haversine(pos, r))}</span>` : '') + (r.sub ? `<span class="info">${esc(r.sub)}</span>` : ''),
-        star: `<span class="save" role="button" data-save="${idx}" aria-label="Als Ziel speichern" title="Als Ziel speichern">☆</span>` })).join('');
+        dist: pos ? fmtDist(haversine(pos, r)) : '', meta: r.sub ? `<span class="info">${esc(r.sub)}</span>` : '',
+        right: `<span class="save" role="button" data-save="${idx}" aria-label="Als Ziel speichern" title="Als Ziel speichern">☆</span>` })).join('');
     }
     html += tileHTML({ cls: ' waze', href: navSearchUrl(query.trim()), icon: ICON_SEARCH, name: `In ${APPS[curApp()]} suchen`,
       meta: `<span class="info">„${esc(query.trim())}“ – falls oben nicht dabei</span>` });
