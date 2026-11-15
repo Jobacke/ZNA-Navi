@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.8.1 | 2026-11-15 | Knopf „Fahrt beenden“ oben im Kopfbereich, standardmäßig an |
 | 1.8.0 | 2026-11-15 | zna.json enthält zusätzlich `index` (Name/eindeutige Wortanfänge → Waze-Link) für den Kurzbefehl „Meine Route“ |
 | 1.7.3 | 2026-11-15 | Siri-Kurzbefehl heißt „Meine Route“ |
 | 1.7.2 | 2026-11-15 | Siri-Kurzbefehl heißt jetzt „Route“, Frage „Welches Ziel?“ (Anleitung in der App angepasst) |

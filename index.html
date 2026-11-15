@@ -99,9 +99,9 @@
   .fab{position:fixed;right:calc(16px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));z-index:6;
     padding:14px 20px;border-radius:999px;border:0;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer;display:none}
   .editing .fab{display:block}
-  .endbtn{position:fixed;left:calc(16px + env(safe-area-inset-left));bottom:calc(18px + env(safe-area-inset-bottom));z-index:6;
-    padding:12px 16px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:700;font-size:15px;
-    box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:8px}
+  .endbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:9px 12px;border-radius:12px;
+    border:1px solid #7a2430;background:#2a0f14;color:#ff8a95;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none}
+  .endbtn:active{background:#3d151c}
   .endbtn svg{width:18px;height:18px}
   .endbtn[hidden],.editing .endbtn{display:none}
 
@@ -168,6 +168,7 @@
   <div class="navsel" id="navSel" aria-label="Navigations-App">
     <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps"><span class="lg">Google Maps</span><span class="sm">Google</span><span class="op">↗</span></button><button type="button" data-app="apple"><span class="lg">Apple Karten</span><span class="sm">Apple</span><span class="op">↗</span></button>
   </div>
+  <a class="endbtn" id="endBtn" href="#" hidden><svg viewBox="0 0 24 24" fill="none" stroke="#ff5470" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>Fahrt beenden</a>
 </header>
 <div id="scroller">
 
@@ -182,7 +183,6 @@
 </div>
 
 <button class="fab" id="fab">+ Ziel</button>
-<a class="endbtn" id="endBtn" href="#" hidden><svg viewBox="0 0 24 24" fill="none" stroke="#ff5470" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>Fahrt beenden</a>
 
 <!-- Editor -->
 <div class="ov" id="ovEdit">
@@ -372,13 +372,13 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
 let canStore = true;
-const DEFAULTS = { topPad:'auto', blz:{ on:false, name:'Blitzer starten', gap:30, end:false, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
+const DEFAULTS = { topPad:'auto', blz:{ on:false, name:'Blitzer starten', gap:30, end:true, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
   gh:{ token:'', repo:'Jobacke/ZNA-Navi', path:'zna.json', branch:'main', auto:true } };
 let state = { items:[], settings:{...DEFAULTS} };
 function load(){
