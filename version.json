@@ -1,5 +1,5 @@
 {
-  "version": "1.7.3",
+  "version": "1.8.0",
   "date": "2026-11-15",
-  "notes": "Siri-Kurzbefehl heißt jetzt „Meine Route“"
+  "notes": "Zielliste enthält Siri-Index (Name → Waze-Link) für den Kurzbefehl „Meine Route“"
 }

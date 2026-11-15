@@ -372,7 +372,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.7.3';
+const APP_VERSION = '1.8.0';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -959,10 +959,32 @@ function parseList(d){
   const items = (d.items||[]).filter(x => x && x.name && (x.w3w || hasCoords(x))).map(clean);
   return { updated: d.updated || '', rev: +d.rev || 0, items };
 }
+/* Siri-Index: Name (klein) und eindeutige Wortanfänge → fertiger Waze-Link */
+const NUMWORDS = ['null','eins','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn','elf','zwölf'];
+const wazeLink = i => `waze://?ll=${(+i.lat).toFixed(6)},${(+i.lon).toFixed(6)}&navigate=yes`;
+function navIndex(list){
+  const norm = t => String(t).toLowerCase().replace(/[.,!?;:()„“"'–-]/g, ' ').replace(/\s+/g, ' ').trim();
+  const numw = k => k.replace(/\b(\d{1,2})\b/g, (m, d) => +d <= 12 ? NUMWORDS[+d] : m);
+  const variants = k => {   // Schreibweisen, wie Siri sie liefern könnte
+    const base = new Set([k, k.replace(/ss/g, 'ß'), k.replace(/ß/g, 'ss'), k.replace(/([a-zäöüß])(\d)/g, '$1 $2')]);
+    const out = new Set();
+    for(const b of base){ for(const x of [b, numw(b)]){ out.add(x); out.add(x.replace(/ /g, '')); } }
+    return [...out].filter(Boolean);
+  };
+  const ok = list.filter(i => typeof i.lat === 'number' && typeof i.lon === 'number' && isFinite(i.lat) && isFinite(i.lon));
+  const idx = {};
+  for(const i of ok) for(const v of variants(norm(i.name))) if(!(v in idx)) idx[v] = wazeLink(i);   // ganze Namen zuerst
+  const pref = {};
+  for(const i of ok){ const w = norm(i.name).split(' '); for(let n = 1; n < w.length; n++){ const k = w.slice(0, n).join(' '); (pref[k] = pref[k] || new Set()).add(wazeLink(i)); } }
+  for(const [k, set] of Object.entries(pref)) if(set.size === 1) for(const v of variants(k)) if(!(v in idx)) idx[v] = [...set][0];  // nur eindeutige Anfänge
+  return Object.fromEntries(Object.entries(idx).sort((a, b) => a[0].localeCompare(b[0], 'de')));
+}
 function serialize(items, rev){
   const list = items.map(clean).sort((a,b) => a.group.localeCompare(b.group,'de') || a.name.localeCompare(b.name,'de'));
+  const idx = navIndex(list);
   return '{\n  "app": "zna-navi",\n  "v": 1,\n  "rev": ' + (rev||0) + ',\n  "updated": "' + new Date().toISOString().slice(0,10) + '",\n  "items": [\n' +
-    list.map(x => '    ' + JSON.stringify(x)).join(',\n') + '\n  ]\n}\n';
+    list.map(x => '    ' + JSON.stringify(x)).join(',\n') + '\n  ],\n  "index": {\n' +
+    Object.entries(idx).map(([k, v]) => '    ' + JSON.stringify(k) + ': ' + JSON.stringify(v)).join(',\n') + '\n  }\n}\n';
 }
 
 /* GitHub (nur mit Schlüssel) */
@@ -1312,7 +1334,7 @@ if('serviceWorker' in navigator && location.protocol === 'https:'){
   try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
 }
 
-window.__zna = { parseImport, parseCoords, parseW3W, navUrl, geocode, exportText, changesSince, upload, checkServer, localChanges, state: () => state };
+window.__zna = { serialize, navIndex, parseImport, parseCoords, parseW3W, navUrl, geocode, exportText, changesSince, upload, checkServer, localChanges, state: () => state };
 })();
 </script>
 </body>
