@@ -1,5 +1,5 @@
 {
-  "version": "1.9.1",
+  "version": "1.9.2",
   "date": "2026-11-15",
-  "notes": "Gruppen-Reiter unter „Fahrt beenden“, „Alle“ zuerst, wischbar mit Randhinweis"
+  "notes": "Gruppe wird bei jedem Ziel klein angezeigt"
 }

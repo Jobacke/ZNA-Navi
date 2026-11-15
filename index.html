@@ -84,8 +84,9 @@
   .tile .go svg{width:24px;height:24px}
   .tile .txt{flex:1;min-width:0}
   .tile .name{font-size:clamp(16px,5vw,19px);font-weight:700;line-height:1.2;overflow-wrap:anywhere}
-  .tile .sub{color:var(--muted);font-size:14px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+  .tile .sub{color:var(--muted);font-size:14px;margin-top:3px;display:flex;gap:6px 8px;flex-wrap:wrap;align-items:center}
   .tile .w3w{color:#ff7a85}
+  .tile .gtag{font-size:12px;font-weight:600;color:#c9d2e8;border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:0 8px;line-height:20px;white-space:nowrap}
   .tile .dist{color:var(--ok);font-weight:600}
   .tile.top{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
   .tile.top::after{content:"Nächstes Ziel";position:absolute;top:-9px;right:14px;background:var(--ok);color:#04130b;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
@@ -381,7 +382,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '1.9.2';
 const APP_DATE = '2026-11-12';
 
 /* ---------- Speicher ---------- */
@@ -663,11 +664,11 @@ function render(){
       const ok = hasCoords(i);
       const top = byDistance && pos && idx===0 && ok && !editing && !q;
       const sub = [
+        `<span class="gtag">${esc(i.group||'ZNA')}</span>`,
         i.w3w ? `<span class="w3w">///${esc(i.w3w)}</span>` : '',
         (i._d!=null && isFinite(i._d)) ? `<span class="dist">${fmtDist(i._d)}</span>` : '',
         !ok ? '<span style="color:var(--warn)">Koordinaten fehlen</span>' : '',
-        i.note ? `<span>${esc(i.note)}</span>` : '',
-        q && (i.group||'ZNA') !== g ? `<span>${esc(i.group||'ZNA')}</span>` : ''
+        i.note ? `<span>${esc(i.note)}</span>` : ''
       ].filter(Boolean).join('');
       const href = ok && !editing ? navUrl(i) : '#';
       return `<a class="tile${top?' top':''}${ok?'':' missing'}" href="${esc(href)}" data-id="${esc(i.id)}">
