@@ -17,6 +17,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.12.0 | 2026-11-15 | Gruppen-Knöpfe umsortieren: lange drücken, dann nach links/rechts schieben; Reihenfolge wird über den Server auf alle Handys verteilt |
 | 1.11.1 | 2026-11-15 | Knopf für Farbschema oben (Auto → Hell → Dunkel), Zahnrad-Symbol für Einstellungen |
 | 1.11.0 | 2026-11-15 | Farbschema Hell / Dunkel / Automatisch; Rastersymbol vor der 3-Wort-Adresse |
 | 1.10.1 | 2026-11-15 | Kachel-Feinschliff: kleiner Pfeil, what3words bündig darunter, Gruppe bündig unter km |

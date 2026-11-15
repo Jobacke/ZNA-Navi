@@ -70,6 +70,9 @@
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;font-weight:600;font-size:15px}
   .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .chip{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .chips.sorting{scroll-snap-type:none}
+  .chip.lift{position:relative;z-index:3;border-color:var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.45);opacity:.96}
   .searchwrap{display:flex;gap:8px;margin-top:10px;min-width:0}
   .search{flex:1;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);outline:none}
   .search:focus{border-color:var(--blue)}
@@ -413,7 +416,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.11.1';
+const APP_VERSION = '1.12.0';
 const APP_DATE = '2026-11-15';
 
 /* ---------- Speicher ---------- */
@@ -630,10 +633,28 @@ async function geocode(q, signal){
 
 /* ---------- Rendering ---------- */
 let editing = false, query = '';
+const groupOrderOf = () => Array.isArray(state.settings.groupOrder) ? state.settings.groupOrder : [];
 function groups(){
   const s = new Set(state.items.map(i => i.group || 'ZNA'));
   if(!s.size) s.add('ZNA');
-  return [...s].sort((a,b)=>a.localeCompare(b,'de'));
+  // eigene Reihenfolge (lange drücken + schieben), neue Gruppen alphabetisch hinten dran
+  const ord = groupOrderOf(), pos = g => { const i = ord.indexOf(g); return i < 0 ? 1e6 : i; };
+  return [...s].sort((a,b) => pos(a) - pos(b) || a.localeCompare(b,'de'));
+}
+function setGroupOrder(order){
+  const before = groups().join('|');
+  state.settings.groupOrder = order;
+  if(groups().join('|') === before){ save(); return; }
+  state.settings.groupOrderDirty = true; save();
+  render._keepScroll = true; render();
+  toast('Reihenfolge gespeichert', 1400);
+  scheduleUpload();
+}
+function adoptServerOrder(srv){
+  // Reihenfolge vom Server übernehmen, außer hier wurde gerade selbst umsortiert
+  if(!srv || !Array.isArray(srv.groups) || state.settings.groupOrderDirty) return;
+  if(JSON.stringify(srv.groups) === JSON.stringify(groupOrderOf())) return;
+  state.settings.groupOrder = srv.groups; save(); render._keepScroll = true; render();
 }
 const ICON_ARROW = '<svg viewBox="0 0 24 24"><path d="M12 3l7 17-7-4-7 4z" fill="#fff"/></svg>';
 const ICON_PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
@@ -657,8 +678,10 @@ function render(){
   const chipsKey = chips.join('|') + '#' + g;
   if(render._chips !== chipsKey){
     render._chips = chipsKey;
+    const keep = render._keepScroll ? $('#chips').scrollLeft : null; render._keepScroll = false;
     $('#chips').innerHTML = chips.map(x => `<button class="chip${x===g?' on':''}" data-g="${esc(x)}">${x==='__all'?'Alle':esc(x)}</button>`).join('');
-    const on = $('#chips .chip.on'); if(on) on.scrollIntoView({ block:'nearest', inline:'center' });
+    if(keep !== null) $('#chips').scrollLeft = keep;
+    else{ const on = $('#chips .chip.on'); if(on) on.scrollIntoView({ block:'nearest', inline:'center' }); }
     updChipFade();
   }
   $('#groupList').innerHTML = gs.map(x=>`<option value="${esc(x)}">`).join('');
@@ -783,6 +806,70 @@ $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
   state.settings.group = b.dataset.g; save(); render();
 });
+/* Gruppen umsortieren: lange drücken, dann nach links/rechts schieben */
+(function chipSort(){
+  const box = $('#chips');
+  let pend = null, drag = null, timer = 0, raf = 0, blockClick = false, lastTouch = 0;
+  const pt = e => e.touches ? (e.touches[0] || e.changedTouches[0]) : e;
+  const sortable = () => box.querySelectorAll('.chip:not([data-g="__all"])').length > 1;
+  function start(e){
+    const b = e.target.closest('.chip');
+    if(!b || b.dataset.g === '__all' || !sortable()) return;
+    const p = pt(e); pend = { b, x:p.clientX, y:p.clientY };
+    clearTimeout(timer); timer = setTimeout(begin, 380);
+  }
+  function begin(){
+    if(!pend) return;
+    const b = pend.b, r = b.getBoundingClientRect();
+    drag = { b, off: pend.x - r.left, x: pend.x }; pend = null;
+    b.classList.add('lift'); box.classList.add('sorting');
+    try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){}
+    place(); raf = requestAnimationFrame(tick);
+  }
+  function place(){
+    const b = drag.b; b.style.transform = '';
+    const br = box.getBoundingClientRect();
+    const want = Math.max(br.left, Math.min(br.right - b.offsetWidth, drag.x - drag.off)), mid = want + b.offsetWidth / 2;
+    const c = el => { const r = el.getBoundingClientRect(); return r.left + r.width / 2; };
+    let n = b.nextElementSibling, p = b.previousElementSibling;
+    while(n && mid > c(n)){ n.after(b); n = b.nextElementSibling; }
+    while(p && p.dataset.g !== '__all' && mid < c(p)){ p.before(b); p = b.previousElementSibling; }
+    b.style.transform = `translateX(${want - b.getBoundingClientRect().left}px) scale(1.06)`;
+  }
+  function tick(){
+    if(!drag) return;
+    const r = box.getBoundingClientRect(); let v = 0;
+    if(drag.x < r.left + 44) v = -Math.ceil((r.left + 44 - drag.x) / 4);
+    else if(drag.x > r.right - 44) v = Math.ceil((drag.x - (r.right - 44)) / 4);
+    if(v){ const was = box.scrollLeft; box.scrollLeft += v; if(box.scrollLeft !== was){ place(); updChipFade(); } }
+    raf = requestAnimationFrame(tick);
+  }
+  function move(e){
+    if(!pend && !drag) return;
+    const p = pt(e);
+    if(pend){ if(Math.abs(p.clientX - pend.x) > 8 || Math.abs(p.clientY - pend.y) > 8){ clearTimeout(timer); pend = null; } return; }
+    if(e.cancelable) e.preventDefault();
+    drag.x = p.clientX; place();
+  }
+  function end(){
+    clearTimeout(timer); pend = null;
+    if(!drag) return;
+    cancelAnimationFrame(raf);
+    const b = drag.b; drag = null;
+    b.style.transform = ''; b.classList.remove('lift'); box.classList.remove('sorting');
+    blockClick = true; setTimeout(() => blockClick = false, 400);
+    setGroupOrder([...box.querySelectorAll('.chip')].map(x => x.dataset.g).filter(x => x !== '__all'));
+  }
+  box.addEventListener('touchstart', e => { lastTouch = Date.now(); start(e); }, { passive:true });
+  box.addEventListener('touchmove', move, { passive:false });
+  box.addEventListener('touchend', e => { lastTouch = Date.now(); end(e); });
+  box.addEventListener('touchcancel', end);
+  box.addEventListener('mousedown', e => { if(e.button === 0 && Date.now() - lastTouch > 800) start(e); });
+  window.addEventListener('mousemove', e => { if(Date.now() - lastTouch > 800) move(e); });
+  window.addEventListener('mouseup', e => { if(Date.now() - lastTouch > 800) end(e); });
+  box.addEventListener('contextmenu', e => { if(pend || drag) e.preventDefault(); });
+  box.addEventListener('click', e => { if(blockClick){ e.stopPropagation(); e.preventDefault(); } }, true);
+})();
 $('#search').addEventListener('input', e => { query = e.target.value; scheduleAddr(); render(); });
 $('#search').addEventListener('keydown', e => { if(e.key === 'Escape'){ e.preventDefault(); clearSearch(); $('#search').blur(); } });
 $('#searchForm').addEventListener('submit', e => {
@@ -1064,7 +1151,7 @@ function adoptItems(list){
 }
 function parseList(d){
   const items = (d.items||[]).filter(x => x && x.name && (x.w3w || hasCoords(x))).map(clean);
-  return { updated: d.updated || '', rev: +d.rev || 0, items };
+  return { updated: d.updated || '', rev: +d.rev || 0, items, groups: Array.isArray(d.groups) ? d.groups.map(String) : null };
 }
 /* Siri-Index: Name (klein) und eindeutige Wortanfänge → fertiger Waze-Link */
 const NUMWORDS = ['null','eins','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn','elf','zwölf'];
@@ -1086,10 +1173,11 @@ function navIndex(list){
   for(const [k, set] of Object.entries(pref)) if(set.size === 1) for(const v of variants(k)) if(!(v in idx)) idx[v] = [...set][0];  // nur eindeutige Anfänge
   return Object.fromEntries(Object.entries(idx).sort((a, b) => a[0].localeCompare(b[0], 'de')));
 }
-function serialize(items, rev){
+function serialize(items, rev, order){
   const list = items.map(clean).sort((a,b) => a.group.localeCompare(b.group,'de') || a.name.localeCompare(b.name,'de'));
   const idx = navIndex(list);
-  return '{\n  "app": "zna-navi",\n  "v": 1,\n  "rev": ' + (rev||0) + ',\n  "updated": "' + new Date().toISOString().slice(0,10) + '",\n  "items": [\n' +
+  const ord = Array.isArray(order) && order.length ? '  "groups": ' + JSON.stringify(order) + ',\n' : '';
+  return '{\n  "app": "zna-navi",\n  "v": 1,\n  "rev": ' + (rev||0) + ',\n  "updated": "' + new Date().toISOString().slice(0,10) + '",\n' + ord + '  "items": [\n' +
     list.map(x => '    ' + JSON.stringify(x)).join(',\n') + '\n  ],\n  "index": {\n' +
     Object.entries(idx).map(([k, v]) => '    ' + JSON.stringify(k) + ': ' + JSON.stringify(v)).join(',\n') + '\n  }\n}\n';
 }
@@ -1142,7 +1230,7 @@ function applyServer(srv){
   }
   state.settings.snap = snapFrom(srv.items, srv.rev);
   state.settings.serverSeen = srvSig(srv);
-  save(); hideBanner(); render(); updSync();
+  save(); hideBanner(); render(); adoptServerOrder(srv); updSync();
 }
 function hideBanner(){ $('#srvBanner').hidden = true; }
 function showBanner(srv, d){
@@ -1164,10 +1252,12 @@ async function checkServer(manual){
   const snap = state.settings.snap;
   if(!snap){
     // Erster Abgleich: Serverstand als gemeinsame Basis merken
-    state.settings.snap = snapFrom(srv.items, srv.rev); state.settings.serverSeen = srvSig(srv); save(); updSync();
+    state.settings.snap = snapFrom(srv.items, srv.rev); state.settings.serverSeen = srvSig(srv); save(); adoptServerOrder(srv); updSync();
     if(manual) toast('Abgleich eingerichtet'); return;
   }
   if(srv.rev < (snap.rev || 0)){ if(manual) toast('Der Server liefert noch den älteren Stand – gleich nochmal versuchen', 3500); return; }
+  adoptServerOrder(srv);
+  if(state.settings.groupOrderDirty && ghOn() && gh().auto !== false) scheduleUpload();
   const d = changesSince(srv.items, snap.items);
   if(!d.n){ hideBanner(); if(manual) toast('Liste ist aktuell'); return; }
   if(!manual && state.settings.serverSeen === srvSig(srv)) return; // bewusst ignoriert
@@ -1194,15 +1284,19 @@ async function upload(silent){
       const snap = state.settings.snap || snapFrom(remote.items, remote.rev);
       const locCh = changesSince(state.items, snap.items);
       const finalItems = mergeInto(remote.items, locCh);
-      const unchanged = changesSince(remote.items, snapFrom(finalItems).items).n === 0;
+      const ordDirty = !!state.settings.groupOrderDirty;
+      const order = ordDirty || !remote.groups ? groupOrderOf() : remote.groups;
+      const unchanged = changesSince(remote.items, snapFrom(finalItems).items).n === 0 && JSON.stringify(order) === JSON.stringify(remote.groups || []);
       let rev = remote.rev;
       if(!unchanged){
         rev = Math.max(remote.rev, snap.rev || 0) + 1;
-        const msg = `ZNA-Navi: ${[locCh.add && locCh.add + ' neu', locCh.chg && locCh.chg + ' geändert', locCh.del.length && locCh.del.length + ' gelöscht'].filter(Boolean).join(', ') || 'Abgleich'}`;
-        try{ await ghReq('PUT', { message: msg, content: b64enc(serialize(finalItems, rev)), sha: remote.sha, branch: gh().branch }); }
+        const msg = `ZNA-Navi: ${[locCh.add && locCh.add + ' neu', locCh.chg && locCh.chg + ' geändert', locCh.del.length && locCh.del.length + ' gelöscht', ordDirty && 'Gruppen-Reihenfolge'].filter(Boolean).join(', ') || 'Abgleich'}`;
+        try{ await ghReq('PUT', { message: msg, content: b64enc(serialize(finalItems, rev, order)), sha: remote.sha, branch: gh().branch }); }
         catch(e){ if(e.conflict && attempt < 2) continue; throw e; } // jemand war schneller: neu laden und nochmal
       }
       adoptItems(finalItems);
+      state.settings.groupOrderDirty = false;
+      if(order.length) state.settings.groupOrder = order;
       state.settings.snap = snapFrom(finalItems, rev);
       state.settings.serverSeen = srvSig({ rev, items: finalItems });
       save(); hideBanner(); render();
@@ -1323,7 +1417,7 @@ $('#impDo').onclick = () => {
 };
 
 /* Export (= Format von zna.json) */
-function exportText(){ return serialize(state.items, state.settings.snap?.rev || 0); }
+function exportText(){ return serialize(state.items, state.settings.snap?.rev || 0, groupOrderOf()); }
 $('#expCopy').onclick = async () => {
   try{ await navigator.clipboard.writeText(exportText()); toast('Export kopiert'); }
   catch(e){ showText(exportText(), 'Bitte manuell kopieren'); }
