@@ -1,12 +1,12 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 10,
+  "rev": 11,
   "updated": "2026-11-15",
   "items": [
     {"name":"B 33","group":"JUH / Dienst","w3w":"baumhaus.ölig.verbunden","lat":48.09992,"lon":11.537,"note":"Moppeds JUH"},
     {"name":"Geschäftsstelle JUH (Arbeit)","group":"JUH / Dienst","w3w":"","lat":48.11768,"lon":11.55792},
-    {"name":"Hohenbrunn","group":"Privat","w3w":"gelbes.langer.tiere","lat":48.05486,"lon":11.67076},
+    {"name":"Hohenbrunn","group":"JUH / Dienst","w3w":"gelbes.langer.tiere","lat":48.05486,"lon":11.67076},
     {"name":"Home","group":"Privat","w3w":"früh.wohnt.leiterin","lat":48.07491,"lon":11.67919,"note":"Zu Hause"},
     {"name":"Schäftlarnstrasse 9","group":"Privat","w3w":"kumpel.winkel.dieser","lat":48.11768,"lon":11.55792},
     {"name":"Augustinum","group":"ZNA","w3w":"kurve.trinken.exzellentes","lat":48.122049,"lon":11.487464},
