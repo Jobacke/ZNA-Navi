@@ -10,7 +10,7 @@ Ablauf des Kurzbefehls:
 """
 import json, os, plistlib, re, uuid
 
-KB_VERSION = "1.0"
+KB_VERSION = "1.1"
 BASIS = "https://zna.vjbackhaus.de/"
 HIER = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HIER)
@@ -143,7 +143,10 @@ def sprechen(t): act("speaktext", WFText=t, WFSpeakTextWait=True, WFSpeakTextLan
 def wenn_start(g, **p): act("conditional", GroupingIdentifier=g, WFControlFlowMode=0, **p)
 def sonst(g): act("conditional", GroupingIdentifier=g, WFControlFlowMode=1)
 def wenn_ende(g): act("conditional", GroupingIdentifier=g, WFControlFlowMode=2, UUID=U())
-HAT_WERT, HAT_KEINEN_WERT, IST, ENTHAELT_NICHT = 100, 101, 4, 999
+# Nur „hat (keinen) Wert“ – Textvergleiche (ist / enthält) übernimmt iOS beim Import nicht
+HAT_WERT, HAT_KEINEN_WERT = 100, 101
+NICHT_BAYERN = r"^(?!.*Bayern).*$"     # leer, wenn das Land nicht „Bayern“ enthält
+GLEICH = r"^(.*)\|\1$"                # „A|B“ wird leer, wenn A und B gleich sind
 
 def bauen():
     A.clear()
@@ -182,7 +185,8 @@ def bauen():
     setvar("KreisSprech", ersetzen(var("Kreis"), KREIS_ERSETZEN))
 
     # 2) Außerhalb Bayerns
-    g = U(); wenn_start(g, WFCondition=ENTHAELT_NICHT, WFConditionalActionString="Bayern", WFInput=bedingung_input(var("Land")))
+    nb = ersetzen(var("Land"), [(NICHT_BAYERN, "")])
+    g = U(); wenn_start(g, WFCondition=HAT_KEINEN_WERT, WFInput=bedingung_input(nb))
     sprechen(tok("Du bist außerhalb Bayerns, in ", var("KreisSprech"), ", ", var("Land"),
                  ". Dafür ist keine Leitstelle hinterlegt."))
     act("exit")
@@ -210,7 +214,9 @@ def bauen():
     setvar("Liste", out(ls, "Inhalte der URL"))
     r = U(); act("repeat.each", GroupingIdentifier=r, WFControlFlowMode=0, WFInput=att(var("Liste")))
     n = wert(var("Repeat Item", dict_coerce=True), "name")
-    g = U(); wenn_start(g, WFCondition=IST, WFConditionalActionString=tok(var("ILS")), WFInput=bedingung_input(out(n, "Wörterbuchwert")))
+    paar = text(tok(out(n, "Wörterbuchwert"), "|", var("ILS")))
+    gl = ersetzen(out(paar, "Text"), [(GLEICH, "")])
+    g = U(); wenn_start(g, WFCondition=HAT_KEINEN_WERT, WFInput=bedingung_input(gl))
     setvar("Treffer", var("Repeat Item"))
     wenn_ende(g)
     act("repeat.each", GroupingIdentifier=r, WFControlFlowMode=2, UUID=U())
