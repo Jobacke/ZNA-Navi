@@ -318,6 +318,14 @@
       Die Leitstellen stehen in <code>leitstellen.json</code> im Repo (Zuständigkeit nach AVBayRDG Anlage 1). Funkgruppen ändern: Datei auf GitHub per Stift-Symbol bearbeiten, Feld <code>"funk"</code> – die Handys laden sie beim nächsten Öffnen.
     </div>
     <div class="hint" id="ilsInfo"></div>
+    <div class="help" style="margin-top:8px">
+      <b>Siri: „Aktuelle Leitstelle“</b> – sagt die am Standort zuständige ILS mit Landkreis und Kurzwahlen (Rettungsdienst, Bettenkanal) an, auch während Waze läuft.
+      <ol>
+        <li>Am Mac im Repo-Ordner: <code>bash kurzbefehl/signieren.sh</code> → <b>Aktuelle Leitstelle.shortcut</b> doppelklicken → hinzufügen</li>
+        <li>Einmal am iPhone mit entsperrtem Bildschirm starten und Standort sowie Zugriff auf <b>nominatim.openstreetmap.org</b> und <b>zna.vjbackhaus.de</b> mit „Immer erlauben“ freigeben</li>
+      </ol>
+      Kurzwahlen kommen live aus <code>leitstellen.json</code>. Nur wenn sich Landkreise ändern: <code>python3 kurzbefehl/gen_kurzbefehl.py</code> (erneuert <code>leitstellen-index.json</code>).
+    </div>
 
     <h3>Blitzer.de PRO</h3>
     <label class="check"><input type="checkbox" id="blzOn"> Beim Öffnen Blitzer.de PRO starten</label>
@@ -465,7 +473,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.14.0';
+const APP_VERSION = '1.15.0';
 const APP_DATE = '2026-11-16';
 
 /* ---------- Speicher ---------- */

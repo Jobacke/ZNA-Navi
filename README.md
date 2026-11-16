@@ -10,6 +10,8 @@ Die Zielliste steht in `zna.json` – ändern per Stift-Symbol auf GitHub, die H
 
 **Leitstellen:** Knopf „Leitstellen“ zeigt die am Standort zuständige ILS (nach Landkreis, AVBayRDG Anlage 1) und alle 25 ILS Bayerns nach Entfernung. Solange die App offen ist, meldet sie einen Leitstellenwechsel (abschaltbar in den Einstellungen). Daten und Funkgruppen stehen in `leitstellen.json` – ändern per Stift-Symbol auf GitHub, kein Code nötig.
 
+**Siri „Aktuelle Leitstelle“:** Kurzbefehl in `kurzbefehl/` – sagt die zuständige ILS mit Landkreis und Kurzwahlen an. Am Mac signieren: `bash kurzbefehl/signieren.sh`, dann `Aktuelle Leitstelle.shortcut` doppelklicken. Kurzwahlen liest er live aus `leitstellen.json`; die Zuordnung Landkreis → ILS steht in `leitstellen-index.json` (erzeugt von `python3 kurzbefehl/gen_kurzbefehl.py` – nur nötig, wenn sich Landkreise ändern).
+
 ## Versionen
 
 Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgezählt:
@@ -19,6 +21,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.15.0 | 2026-11-16 | Siri-Kurzbefehl „Aktuelle Leitstelle“ (Ansage ILS, Landkreis, Kurzwahlen Rettungsdienst/Bettenkanal) mit `leitstellen-index.json` und Generator in `kurzbefehl/`; Anleitung in den Einstellungen unter „Leitstellen“ |
 | 1.14.0 | 2026-11-16 | Neue Rubrik „Leitstellen“ (aus Wissen RD 1.11.0): zuständige ILS am Standort per Landkreis (Nominatim), alle 25 ILS Bayerns nach Luftlinie, Detail mit Sitz/Landkreisen/Funkgruppen, Meldung bei Leitstellenwechsel (Einstellung, Standard an); Daten in `leitstellen.json` |
 | 1.13.0 | 2026-11-15 | Mehrere Gruppen gleichzeitig auswählen: Gruppen-Knöpfe schalten an/aus, „Alle“ setzt zurück |
 | 1.12.0 | 2026-11-15 | Gruppen-Knöpfe umsortieren: lange drücken, dann nach links/rechts schieben; Reihenfolge wird über den Server auf alle Handys verteilt |
