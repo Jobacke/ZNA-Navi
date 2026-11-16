@@ -139,6 +139,35 @@
   .endbtn:active{background:#3d151c}
   .endbtn svg{width:18px;height:18px}
   .endbtn[hidden],.editing .endbtn{display:none}
+  /* Werkzeugzeile: Leitstellen + Fahrt beenden nebeneinander */
+  .toolrow{display:flex;gap:8px;margin-top:8px;min-width:0}
+  .toolrow > *{flex:1 1 0;min-width:0;margin-top:0;width:auto}
+  .editing .toolrow{display:none}
+  .toolrow .endbtn{white-space:nowrap;overflow:hidden}
+  @media (max-width:370px){ .toolrow{gap:6px} .toolrow .ilsbtn,.toolrow .endbtn{font-size:14px;padding:9px 8px;gap:5px} }
+  .ilsbtn{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;border-radius:12px;border:1px solid var(--line);
+    background:var(--panel);color:var(--text);font-weight:700;font-size:15px;cursor:pointer;white-space:nowrap;overflow:hidden}
+  .ilsbtn span{overflow:hidden;text-overflow:ellipsis}
+  .ilsbtn svg{width:18px;height:18px;flex:none}
+  .ilsbtn.known{border-color:var(--ok)}
+
+  /* Leitstellen */
+  .tile.ils .go{background:var(--addr)}
+  .tile.zust{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+  .tile.zust::after{content:"Zuständig";position:absolute;top:-9px;right:14px;background:var(--ok);color:#04130b;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
+  .zcard{display:block;width:100%;text-align:left;padding:12px 14px;border-radius:var(--r);border:1px solid var(--ok);box-shadow:0 0 0 1px var(--ok) inset;
+    background:var(--panel);color:var(--text);cursor:pointer;margin-bottom:10px}
+  .zcard small{display:block;color:var(--muted);font-size:13px}
+  .zcard strong{display:block;font-size:19px;margin:2px 0}
+  .zcard .kreis{display:block;color:var(--muted);font-size:14px}
+  .funk{margin-top:6px;font-size:14px;line-height:1.5}
+  .ilsstat{color:var(--muted);font-size:13px;margin:0 2px 10px}
+  .ilsstat button{background:none;border:0;padding:0;color:var(--blue);text-decoration:underline;cursor:pointer;font-size:13px}
+  .ilsnote{padding:10px 12px;border-radius:12px;background:var(--warnbg);color:var(--warntext);font-size:14px;margin-bottom:10px}
+  #ilsBody{display:grid;gap:10px}
+  #ilsBody .back{margin-bottom:4px}
+  .ilsdet h3{margin:6px 0 6px}
+  .ilsdet ul{margin:0;padding-left:20px}.ilsdet li{margin:3px 0}
 
   .btn{padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:600}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -203,12 +232,16 @@
   <div class="navsel" id="navSel" aria-label="Navigations-App">
     <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps"><span class="lg">Google Maps</span><span class="sm">Google</span><span class="op">↗</span></button><button type="button" data-app="apple"><span class="lg">Apple Karten</span><span class="sm">Apple</span><span class="op">↗</span></button>
   </div>
-  <a class="endbtn" id="endBtn" href="#" hidden><svg viewBox="0 0 24 24" fill="none" stroke="#ff5470" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>Fahrt beenden</a>
+  <div class="toolrow">
+    <button type="button" class="ilsbtn" id="btnIls" title="Leitstellen" aria-label="Leitstellen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="1.6"/><path d="M8.5 5.5a5 5 0 0 0 0 7M15.5 5.5a5 5 0 0 1 0 7M5.6 2.8a9 9 0 0 0 0 12.4M18.4 2.8a9 9 0 0 1 0 12.4M12 11l-3.5 10M12 11l3.5 10M9.6 18h4.8"/></svg><span id="btnIlsTxt">Leitstellen</span></button>
+    <a class="endbtn" id="endBtn" href="#" hidden><svg viewBox="0 0 24 24" fill="none" stroke="#ff5470" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>Fahrt beenden</a>
+  </div>
   <div class="chipwrap"><div class="chips" id="chips"></div></div>
 </header>
 <div id="scroller">
 
 <div id="storageWarn" class="banner" hidden>Dieser Browser erlaubt hier kein dauerhaftes Speichern. Änderungen gehen beim Schließen verloren.</div>
+<div id="ilsBar" class="banner info" role="alert" hidden></div>
 <div id="srvBanner" class="banner info" hidden></div>
 <div id="appBanner" class="banner info" hidden></div>
 <div id="syncBar" class="banner" hidden></div>
@@ -254,6 +287,14 @@
   </div>
 </div>
 
+<!-- Leitstellen -->
+<div class="ov" id="ovIls">
+  <div class="sheet">
+    <h2><span id="ilsTitle">Leitstellen</span><button class="btn small" data-close>Schließen</button></h2>
+    <div id="ilsBody"></div>
+  </div>
+</div>
+
 <!-- Einstellungen -->
 <div class="ov" id="ovSet">
   <div class="sheet">
@@ -269,6 +310,14 @@
     </div>
     <label class="check"><input type="checkbox" id="setAutoSrv"> Beim Öffnen nach Updates suchen</label>
     <div class="hint" id="srvInfo"></div>
+
+    <h3>Leitstellen</h3>
+    <label class="check"><input type="checkbox" id="ilsWatchOn"> Wechsel der zuständigen Leitstelle melden</label>
+    <div class="hint">Funktioniert nur, solange ZNA-Navi geöffnet ist. Prüft höchstens einmal pro Minute und erst nach etwa 300 m Bewegung (Landkreis über OpenStreetMap/Nominatim).</div>
+    <div class="help" style="margin-top:8px">
+      Die Leitstellen stehen in <code>leitstellen.json</code> im Repo (Zuständigkeit nach AVBayRDG Anlage 1). Funkgruppen ändern: Datei auf GitHub per Stift-Symbol bearbeiten, Feld <code>"funk"</code> – die Handys laden sie beim nächsten Öffnen.
+    </div>
+    <div class="hint" id="ilsInfo"></div>
 
     <h3>Blitzer.de PRO</h3>
     <label class="check"><input type="checkbox" id="blzOn"> Beim Öffnen Blitzer.de PRO starten</label>
@@ -416,13 +465,13 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.13.0';
-const APP_DATE = '2026-11-15';
+const APP_VERSION = '1.14.0';
+const APP_DATE = '2026-11-16';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
 let canStore = true;
-const DEFAULTS = { theme:'auto', topPad:'auto', blz:{ on:false, name:'Blitzer starten', gap:30, end:true, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
+const DEFAULTS = { theme:'auto', topPad:'auto', ilsWatch:true, ilsLast:'', blz:{ on:false, name:'Blitzer starten', gap:30, end:true, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
   gh:{ token:'', repo:'Jobacke/ZNA-Navi', path:'zna.json', branch:'main', auto:true } };
 let state = { items:[], settings:{...DEFAULTS} };
 function load(){
@@ -1349,6 +1398,7 @@ function openSettings(){
   $('#micSc').value = state.settings.micSc || '';
   $('#micScName').textContent = state.settings.micSc || 'ZNA Sprache';
   $('#setAutoSrv').checked = !!state.settings.autoSrv;
+  $('#ilsWatchOn').checked = ilsWatchOn(); updIlsInfo();
   $('#setKey').value = state.settings.w3wKey || '';
   $('#ghToken').value = gh().token || '';
   $('#ghRepo').value = gh().repo || '';
@@ -1506,6 +1556,203 @@ function blzStateText(){
   return mins ? `Nächster Autostart frühestens nach ${mins} Min. Pause.` : 'Startet beim nächsten Öffnen.';
 }
 
+/* ---------- Leitstellen (ILS Bayern) ---------- */
+// Zuständigkeit = Landkreis (AVBayRDG Anlage 1), nicht Entfernung. Daten: leitstellen.json im Repo (Funkgruppen ohne Code änderbar).
+// Landkreis über OpenStreetMap (Nominatim reverse). Übernommen aus Wissen RD v1.11.0.
+const ILS_KEY = 'zna-navi-ils';                   // letzte erfolgreich geladene leitstellen.json (für offline)
+const ILS_WACHE = { abstand:300, pause:60000 };   // Wechselmeldung: höchstens 1×/Min. und erst nach ≥ 300 m
+const KREIS_NAH = 500;                            // Landkreis-Ergebnis gilt im Umkreis von 500 m weiter
+let ilsData = [], ilsDataErr = '';
+let ilsK = null, ilsKErr = '', ilsBusy = false, ilsPosErr = '';
+let ilsSel = null, ilsListTop = 0;                // geöffnete ILS (Detail) bzw. Scrollstand der Liste
+let ilsNow = null;                                // in dieser Sitzung ermittelte zuständige ILS – für den Knopf
+let ilsWatchId = null, ilsPruef = null, ilsLastP = null, ilsCheckBusy = false;
+
+// Normalisierung – exakt wie in Wissen RD (mit 26 Kreisnamen getestet)
+const norm = s => String(s||"").toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss").replace(/[^a-z0-9]/g,"");
+const kreisSchluessel = name => norm(String(name || "")
+  .replace(/^(Landkreis|Kreisfreie Stadt|Stadt|Kreis)\s+/i, "")
+  .replace(/\s*\((Stadt|Landkreis)\)\s*$/i, "")
+  .replace(/\ba\.\s*d\.\s*/gi, "an der ").replace(/\bi\.\s*d\.\s*/gi, "in der ")
+  .replace(/\ba\.\s*/gi, "am ").replace(/\bi\.\s*/gi, "im ").replace(/OPf\./g, "Oberpfalz"));
+
+function validIls(d){
+  if(!Array.isArray(d)) return [];
+  return d.filter(x => x && typeof x.name === 'string' && typeof x.lat === 'number' && typeof x.lon === 'number' && isFinite(x.lat) && isFinite(x.lon) && Array.isArray(x.kreise))
+    .map(x => ({ name:x.name, sitz:String(x.sitz || ''), lat:x.lat, lon:x.lon, kreise:x.kreise.map(String), funk:Array.isArray(x.funk) ? x.funk.map(String) : [] }));
+}
+async function loadIls(){
+  try{
+    const r = await fetch('leitstellen.json', { cache:'no-cache' });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const d = validIls(await r.json());
+    if(!d.length) throw new Error('leer');
+    ilsData = d; ilsDataErr = '';
+    try{ localStorage.setItem(ILS_KEY, JSON.stringify(d)); }catch(e){}
+  }catch(e){
+    if(!ilsData.length){ try{ ilsData = validIls(JSON.parse(localStorage.getItem(ILS_KEY) || '[]')); }catch(_){ ilsData = []; } }
+    ilsDataErr = ilsData.length ? '' : 'Leitstellen-Daten nicht ladbar (leitstellen.json) – Netz prüfen.';
+  }
+  updIlsInfo();
+  if($('#ovIls').classList.contains('show')) renderIls();
+  if(ilsLastP) pruefeIls(ilsLastP);   // erste Standortmeldung kam evtl. vor den Daten
+}
+async function kreisAbfrage(lat, lon){
+  const ctrl = new AbortController(), uhr = setTimeout(() => ctrl.abort(), 7000);
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&zoom=10&addressdetails=1&accept-language=de`, { signal: ctrl.signal });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const a = (await r.json()).address || {};
+    return { name: a.county || a.city || a.town || a.municipality || '', land: a.state || '' };
+  }finally{ clearTimeout(uhr); }
+}
+function zustaendigeILS(kreisName){
+  const k = kreisSchluessel(kreisName);
+  if(!k) return null;
+  return ilsData.find(e => e.kreise.some(x => kreisSchluessel(x) === k))
+    || ilsData.find(e => e.kreise.some(x => { const y = kreisSchluessel(x); return y.length >= 4 && (k.startsWith(y) || y.startsWith(k)); }))
+    || null;
+}
+const inBayern = k => !!k && /bayern/i.test(k.land || '');
+const kreisFuer = p => ilsK && p && haversine(ilsK, p) < KREIS_NAH ? ilsK : null;
+function merkeKreis(p, k){
+  ilsK = { lat:p.lat, lon:p.lon, t:Date.now(), ...k }; ilsKErr = '';
+  const ils = inBayern(k) ? zustaendigeILS(k.name) : null;
+  if(ils || !inBayern(k)) ilsNow = ils ? ils.name : null;
+  updIlsBtn();
+}
+function updIlsBtn(){
+  $('#btnIlsTxt').textContent = ilsNow || 'Leitstellen';
+  $('#btnIls').classList.toggle('known', !!ilsNow);
+  $('#btnIls').title = ilsNow ? `Zuständig: ${ilsNow} – alle Leitstellen anzeigen` : 'Leitstellen';
+}
+function updIlsInfo(){
+  const n = ilsData.filter(e => e.funk.length).length;
+  $('#ilsInfo').textContent = ilsData.length ? `leitstellen.json: ${ilsData.length} Leitstellen, davon ${n} mit Funkgruppen.` : (ilsDataErr || 'Leitstellen werden geladen …');
+}
+
+/* Ansicht */
+const ICON_ILS = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="1.6"/><path d="M8.5 5.5a5 5 0 0 0 0 7M15.5 5.5a5 5 0 0 1 0 7M12 11l-3.5 10M12 11l3.5 10M9.6 18h4.8"/></svg>';
+const funkHTML = f => f.length ? `<div class="funk">📻 ${f.map(esc).join('<br>📻 ')}</div>` : '';
+function openIls(name){
+  closeAll();
+  ilsSel = name || null; ilsListTop = 0;
+  renderIls(); $('#ovIls').classList.add('show'); $('#ovIls .sheet').scrollTop = 0;
+  if(!ilsData.length) loadIls();
+  ilsRefresh(false);
+}
+async function ilsRefresh(force){
+  if(ilsBusy) return;
+  ilsBusy = true; renderIls();
+  try{
+    if(force || !pos || Date.now() - pos.t > 60000) await locate(true);
+    ilsPosErr = pos ? '' : 'Standort nicht verfügbar';
+    if(pos && (force || !kreisFuer(pos) || Date.now() - ilsK.t > 10 * 60000)){
+      try{ merkeKreis(pos, await kreisAbfrage(pos.lat, pos.lon)); }
+      catch(e){ ilsKErr = 'Zuständige ILS nicht abrufbar (offline?)'; }
+    }
+  }finally{ ilsBusy = false; renderIls(); }
+}
+function renderIls(){
+  const body = $('#ilsBody');
+  const k = kreisFuer(pos), zust = inBayern(k) ? zustaendigeILS(k.name) : null;
+  const list = ilsData.map(e => ({ e, d: pos ? haversine(pos, e) : null }));
+  if(pos) list.sort((a, b) => a.d - b.d || a.e.name.localeCompare(b.e.name, 'de'));
+  else list.sort((a, b) => a.e.name.localeCompare(b.e.name, 'de'));
+
+  // Detail einer ILS
+  const sel = ilsSel && list.find(x => x.e.name === ilsSel);
+  if(sel){
+    const { e, d } = sel, isZ = !!zust && zust.name === e.name;
+    $('#ilsTitle').textContent = e.name;
+    body.innerHTML = `<button class="back" type="button" id="ilsBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Alle Leitstellen</button>
+      <div class="ilsdet">
+        ${isZ ? `<div class="zcard" style="cursor:default"><small>📍 An deinem Standort zuständig</small><span class="kreis">${esc(k.name)}</span></div>` : ''}
+        <div class="help"><b>${esc(e.name)}</b>${d != null ? ` · ≈ ${fmtDist(d)} Luftlinie` : ''}</div>
+        <h3>Sitz</h3><div class="help">${esc(e.sitz || '–')}</div>
+        <h3>Zuständigkeitsbereich</h3><div class="help"><ul>${e.kreise.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+        <h3>Funkgruppen</h3><div class="help">${e.funk.length ? e.funk.map(f => '📻 ' + esc(f)).join('<br>') : 'Keine Funkgruppen hinterlegt – in <code>leitstellen.json</code> im Feld <code>"funk"</code> ergänzen.'}</div>
+        <div class="hint">Zuständigkeit nach AVBayRDG Anlage 1 (Rettungsdienstbereiche). Entfernung: Luftlinie zum Ort der ILS (Ortsmitte, ungefähr).</div>
+      </div>`;
+    return;
+  }
+  ilsSel = null;
+  $('#ilsTitle').textContent = 'Leitstellen';
+  let html = '';
+  if(ilsDataErr) html += `<div class="ilsnote">${esc(ilsDataErr)}</div>`;
+  if(ilsBusy) html += `<div class="ilsstat">📍 Standort und zuständige ILS werden ermittelt …</div>`;
+  else if(pos){
+    if(zust) html += `<button type="button" class="zcard" data-ils="${esc(zust.name)}"><small>📍 An deinem Standort zuständig</small><strong>${esc(zust.name)}</strong><span class="kreis">${esc(k.name)}</span>${funkHTML(zust.funk)}</button>`;
+    else if(k && !inBayern(k)) html += `<div class="ilsnote">Standort außerhalb Bayerns (${esc(k.name || k.land || 'unbekannt')}) – dafür sind keine Leitstellen hinterlegt.</div>`;
+    else if(k) html += `<div class="ilsnote">Für „${esc(k.name || 'unbekannt')}“ wurde keine ILS gefunden.</div>`;
+    else if(ilsKErr) html += `<div class="ilsnote">⚠️ ${esc(ilsKErr)} Die Liste ist trotzdem nach Entfernung sortiert.</div>`;
+    html += `<div class="ilsstat">Nächste zuerst (Luftlinie zum Ort der ILS) · Standort ±${Math.round(pos.acc)} m · <button type="button" id="ilsNeu">aktualisieren</button></div>`;
+  }else html += `<div class="ilsstat">📍 ${esc(ilsPosErr || 'Standort unbekannt')} – Liste alphabetisch · <button type="button" id="ilsNeu">nochmal versuchen</button></div>`;
+  html += list.map(({ e, d }) => tileHTML({ cls: ' ils' + (zust && zust.name === e.name ? ' zust' : ''), href: '#', attrs: `data-ils="${esc(e.name)}"`,
+    icon: ICON_ILS, name: e.name, title: `${e.name} – ${e.kreise.join(', ')}`, dist: d != null ? '≈ ' + fmtDist(d) : '',
+    meta: `<span class="info">${esc(e.kreise.join(', '))}</span>`, right: e.funk.length ? '<span class="gtag">📻 Funk</span>' : '' })).join('');
+  body.innerHTML = html;
+}
+$('#btnIls').onclick = () => openIls(null);
+$('#ilsBody').addEventListener('click', e => {
+  const sh = $('#ovIls .sheet');
+  if(e.target.closest('#ilsNeu')){ ilsRefresh(true); return; }
+  if(e.target.closest('#ilsBack')){ ilsSel = null; renderIls(); sh.scrollTop = ilsListTop; return; }
+  const t = e.target.closest('[data-ils]'); if(!t) return;
+  e.preventDefault();
+  ilsListTop = sh.scrollTop; ilsSel = t.dataset.ils; renderIls(); sh.scrollTop = 0;
+});
+
+/* Meldung bei Leitstellenwechsel (läuft nur, solange die App geöffnet ist) */
+const ilsWatchOn = () => state.settings.ilsWatch !== false;
+function starteIlsWache(){
+  stoppeIlsWache();
+  if(!ilsWatchOn() || !navigator.geolocation) return;
+  try{
+    ilsWatchId = navigator.geolocation.watchPosition(p => { ilsLastP = { lat:p.coords.latitude, lon:p.coords.longitude }; pruefeIls(ilsLastP); },
+      () => {}, { enableHighAccuracy:false, maximumAge:60000, timeout:30000 });
+  }catch(e){}
+}
+function stoppeIlsWache(){
+  if(ilsWatchId != null){ try{ navigator.geolocation.clearWatch(ilsWatchId); }catch(e){} }
+  ilsWatchId = null;
+}
+async function pruefeIls(p){
+  const jetzt = Date.now(), letzte = ilsPruef;
+  if(ilsCheckBusy || !ilsData.length || !ilsWatchOn()) return;
+  if(letzte && (jetzt - letzte.t < ILS_WACHE.pause || haversine(letzte, p) < ILS_WACHE.abstand)) return;
+  ilsCheckBusy = true;
+  try{
+    const k = await kreisAbfrage(p.lat, p.lon);
+    ilsPruef = { ...p, t: Date.now() };
+    merkeKreis(p, k);
+    const bay = inBayern(k), ils = bay ? zustaendigeILS(k.name) : null;
+    if($('#ovIls').classList.contains('show') && !ilsBusy) renderIls();
+    if(bay && !ils) return;               // Landkreis nicht zuordenbar: nichts melden, letzte ILS behalten
+    const neu = ils ? ils.name : 'ausserhalb';
+    const alt = state.settings.ilsLast;
+    if(alt !== neu){ state.settings.ilsLast = neu; save(); }
+    if(alt && alt !== neu) meldeIlsWechsel(ils, k);   // erste Ermittlung ohne Meldung
+  }catch(e){ /* offline – beim nächsten Standort erneut */ }
+  finally{ ilsCheckBusy = false; }
+}
+function meldeIlsWechsel(ils, k){
+  const b = $('#ilsBar');
+  b.innerHTML = `<b>📡 Leitstellenwechsel – Jetzt zuständig: ${esc(ils ? ils.name : 'keine bayerische ILS')}</b> – ${esc(k.name || k.land || '')}${ils ? '' : ' (außerhalb Bayerns)'}
+    ${ils ? funkHTML(ils.funk) : ''}
+    <div class="row">${ils ? '<button class="btn small ok" id="ilsOpen">Öffnen</button>' : ''}<button class="btn small" id="ilsOk">OK</button></div>`;
+  b.hidden = false;
+  try{ if(navigator.vibrate) navigator.vibrate([120, 80, 120]); }catch(e){}
+  $('#scroller').scrollTo({ top:0, behavior:'smooth' });
+  const zu = () => { b.hidden = true; };
+  $('#ilsOk').onclick = zu;
+  const o = $('#ilsOpen'); if(o) o.onclick = () => { zu(); openIls(ils.name); };
+}
+$('#ilsWatchOn').onchange = e => {
+  state.settings.ilsWatch = e.target.checked; save();
+  if(e.target.checked) starteIlsWache(); else { stoppeIlsWache(); $('#ilsBar').hidden = true; }
+};
+
 /* ---------- Farbschema ---------- */
 const mqLight = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : null;
 const THEME_ICONS = {
@@ -1554,6 +1801,8 @@ updSync();
 updEndBtn();
 touchUse();
 checkAppVersion();
+loadIls();
+starteIlsWache();
 if(!canStore) $('#storageWarn').hidden = false;
 const qp = new URLSearchParams(location.search).get('q');
 if(qp){
@@ -1565,18 +1814,21 @@ render();
 if(state.settings.autoSrv || !state.items.length) checkServer(false);
 locate(true); // Standort immer beim Start
 document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState !== 'visible'){ state.settings.lastUse = Date.now(); save(); return; }
+  if(document.visibilityState !== 'visible'){ state.settings.lastUse = Date.now(); save(); stoppeIlsWache(); return; }
   if(resetOnReturn) clearSearch();
   touchUse();
   locate(true); // Standort bei jeder Rückkehr aktualisieren
   if(state.settings.autoSrv) checkServer(false);
   checkAppVersion();
+  loadIls(); starteIlsWache();
+  if($('#ovIls').classList.contains('show')) ilsRefresh(false);
 });
 if('serviceWorker' in navigator && location.protocol === 'https:'){
   try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
 }
 
-window.__zna = { serialize, navIndex, parseImport, parseCoords, parseW3W, navUrl, geocode, exportText, changesSince, upload, checkServer, localChanges, state: () => state };
+window.__zna = { serialize, navIndex, parseImport, parseCoords, parseW3W, navUrl, geocode, exportText, changesSince, upload, checkServer, localChanges, state: () => state,
+  ils: { norm, kreisSchluessel, zustaendigeILS, data: () => ilsData, pruefeIls, meldeIlsWechsel, openIls, merkeKreis, renderIls } };
 })();
 </script>
 </body>

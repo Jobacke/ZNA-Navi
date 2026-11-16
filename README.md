@@ -8,6 +8,8 @@ PWA für iPhone: Ziele (z. B. ZNA-Liste aus what3words inkl. Koordinaten) import
 
 Die Zielliste steht in `zna.json` – ändern per Stift-Symbol auf GitHub, die Handys bieten das Update beim nächsten Öffnen an. Adresssuche über OpenStreetMap (Photon/Nominatim).
 
+**Leitstellen:** Knopf „Leitstellen“ zeigt die am Standort zuständige ILS (nach Landkreis, AVBayRDG Anlage 1) und alle 25 ILS Bayerns nach Entfernung. Solange die App offen ist, meldet sie einen Leitstellenwechsel (abschaltbar in den Einstellungen). Daten und Funkgruppen stehen in `leitstellen.json` – ändern per Stift-Symbol auf GitHub, kein Code nötig.
+
 ## Versionen
 
 Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgezählt:
@@ -17,6 +19,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.14.0 | 2026-11-16 | Neue Rubrik „Leitstellen“ (aus Wissen RD 1.11.0): zuständige ILS am Standort per Landkreis (Nominatim), alle 25 ILS Bayerns nach Luftlinie, Detail mit Sitz/Landkreisen/Funkgruppen, Meldung bei Leitstellenwechsel (Einstellung, Standard an); Daten in `leitstellen.json` |
 | 1.13.0 | 2026-11-15 | Mehrere Gruppen gleichzeitig auswählen: Gruppen-Knöpfe schalten an/aus, „Alle“ setzt zurück |
 | 1.12.0 | 2026-11-15 | Gruppen-Knöpfe umsortieren: lange drücken, dann nach links/rechts schieben; Reihenfolge wird über den Server auf alle Handys verteilt |
 | 1.11.1 | 2026-11-15 | Knopf für Farbschema oben (Auto → Hell → Dunkel), Zahnrad-Symbol für Einstellungen |
