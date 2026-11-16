@@ -1,5 +1,5 @@
 [
-  {"name": "ILS München", "sitz": "München (Feuerwache 4)", "lat": 48.156007, "lon": 11.555468, "kreise": ["München (Stadt)", "München (Landkreis)"], "funk": ["RD_1_M (Nord) – Kurzwahl 2513", "RD_2_M (Süd) – Kurzwahl 2514", "RD_Betten_M – Bettenanforderung"]},
+  {"name": "ILS München", "sitz": "München (Feuerwache 4)", "lat": 48.156007, "lon": 11.555468, "kreise": ["München (Stadt)", "München (Landkreis)"], "funk": ["RD_1_M (Nord) – Kurzwahl 2513", "RD_2_M (Süd) – Kurzwahl 2514", "RD_Betten_M – Kurzwahl 2511 (Bettenanforderung)"]},
   {"name": "ILS FFB", "sitz": "Maisach", "lat": 48.217, "lon": 11.258, "kreise": ["Dachau", "Fürstenfeldbruck", "Landsberg am Lech", "Starnberg"], "funk": ["RD_ILS_FFB – Kurzwahl 2013", "RD_Betten_FFB – Kurzwahl 2012 (Bettenanforderung)"]},
   {"name": "ILS Erding", "sitz": "Erding", "lat": 48.306, "lon": 11.907, "kreise": ["Ebersberg", "Erding", "Freising"], "funk": ["RD_ILS_ED – Kurzwahl 1913", "RD_Betten_ED – Kurzwahl 1912 (Bettenanforderung)"]},
   {"name": "ILS Oberland", "sitz": "Weilheim i. OB", "lat": 47.84, "lon": 11.142, "kreise": ["Bad Tölz-Wolfratshausen", "Garmisch-Partenkirchen", "Weilheim-Schongau"], "funk": ["RD_ILS_WM – Kurzwahl 3013", "RD_Betten_WM – Kurzwahl 3012 (Bettenanforderung)"]},

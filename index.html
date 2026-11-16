@@ -315,7 +315,7 @@
     <label class="check"><input type="checkbox" id="ilsWatchOn"> Wechsel der zuständigen Leitstelle melden</label>
     <div class="hint">Funktioniert nur, solange ZNA-Navi geöffnet ist. Prüft höchstens einmal pro Minute und erst nach etwa 300 m Bewegung (Landkreis über OpenStreetMap/Nominatim).</div>
     <div class="help" style="margin-top:8px">
-      Die Leitstellen stehen in <code>leitstellen.json</code> im Repo (Zuständigkeit nach AVBayRDG Anlage 1). Funkgruppen ändern: Datei auf GitHub per Stift-Symbol bearbeiten, Feld <code>"funk"</code> – die Handys laden sie beim nächsten Öffnen.
+      Die Leitstellen stehen in <code>leitstellen.json</code> im Repo (Zuständigkeit nach AVBayRDG Anlage 1). Ändern: Leitstelle antippen → <b>Bearbeiten</b>. Mit GitHub-Schlüssel (unten bei „Hochladen zum Server“) landet die Änderung auf dem Server und gilt für beide Handys und Siri.
     </div>
     <div class="hint" id="ilsInfo"></div>
     <div class="help" style="margin-top:8px">
@@ -324,7 +324,7 @@
         <li>Am Mac im Repo-Ordner: <code>bash kurzbefehl/signieren.sh</code> → <b>Aktuelle Leitstelle.shortcut</b> doppelklicken → hinzufügen</li>
         <li>Einmal am iPhone mit entsperrtem Bildschirm starten und Standort sowie Zugriff auf <b>nominatim.openstreetmap.org</b> und <b>zna.vjbackhaus.de</b> mit „Immer erlauben“ freigeben</li>
       </ol>
-      Kurzwahlen kommen live aus <code>leitstellen.json</code>. Nur wenn sich Landkreise ändern: <code>python3 kurzbefehl/gen_kurzbefehl.py</code> (erneuert <code>leitstellen-index.json</code>).
+      Kurzwahlen kommen live aus <code>leitstellen.json</code>. Änderst du Landkreise in der App, erneuert sie beim Hochladen auch <code>leitstellen-index.json</code>.
     </div>
 
     <h3>Blitzer.de PRO</h3>
@@ -473,7 +473,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.15.0';
+const APP_VERSION = '1.16.0';
 const APP_DATE = '2026-11-16';
 
 /* ---------- Speicher ---------- */
@@ -1260,9 +1260,9 @@ const gh = () => ({ ...DEFAULTS.gh, ...(state.settings.gh || {}) });
 const ghOn = () => !!(gh().token && gh().repo);
 function b64enc(str){ const b = new TextEncoder().encode(str); let s = ''; for(let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
 function b64dec(b64){ const bin = atob(String(b64).replace(/\s/g,'')); const u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
-async function ghReq(method, body){
-  const g = gh();
-  const url = `https://api.github.com/repos/${g.repo}/contents/${g.path}` + (method === 'GET' ? `?ref=${encodeURIComponent(g.branch)}&t=${Date.now()}` : '');
+async function ghReq(method, body, path, allow404){
+  const g = gh(), file = path || g.path;
+  const url = `https://api.github.com/repos/${g.repo}/contents/${file}` + (method === 'GET' ? `?ref=${encodeURIComponent(g.branch)}&t=${Date.now()}` : '');
   const headers = { 'Authorization':'Bearer ' + g.token, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
   if(body) headers['Content-Type'] = 'application/json';
   let r;
@@ -1270,7 +1270,7 @@ async function ghReq(method, body){
   catch(e){ throw new Error('GitHub nicht erreichbar'); }
   if(r.status === 401) throw new Error('GitHub-Schlüssel ungültig oder abgelaufen');
   if(r.status === 403) throw new Error('GitHub-Schlüssel hat keine Schreibrechte (Contents: Read and write)');
-  if(r.status === 404) throw new Error('Repo oder zna.json nicht gefunden – ist der Schlüssel für dieses Repo freigegeben?');
+  if(r.status === 404){ if(allow404) return null; throw new Error(`Repo oder ${file} nicht gefunden – ist der Schlüssel für dieses Repo freigegeben?`); }
   if(r.status === 409 || r.status === 422){ const e = new Error('Konflikt beim Speichern'); e.conflict = true; throw e; }
   if(!r.ok) throw new Error('GitHub-Fehler ' + r.status);
   return r.json();
@@ -1570,7 +1570,10 @@ function blzStateText(){
 const ILS_KEY = 'zna-navi-ils';                   // letzte erfolgreich geladene leitstellen.json (für offline)
 const ILS_WACHE = { abstand:300, pause:60000 };   // Wechselmeldung: höchstens 1×/Min. und erst nach ≥ 300 m
 const KREIS_NAH = 500;                            // Landkreis-Ergebnis gilt im Umkreis von 500 m weiter
-let ilsData = [], ilsDataErr = '';
+let ilsData = [], ilsBase = [], ilsDataErr = '';   // ilsData = Serverstand (ilsBase) + eigene Änderungen
+const ILS_EDIT_KEY = 'zna-navi-ils-edits';          // eigene Änderungen: [{ orig, e, up, t }] – up = schon hochgeladen
+let ilsEdits = []; try{ ilsEdits = JSON.parse(localStorage.getItem(ILS_EDIT_KEY) || '[]').filter(x => x && x.e && x.e.name); }catch(e){}
+let ilsEditing = false, ilsUploading = false;
 let ilsK = null, ilsKErr = '', ilsBusy = false, ilsPosErr = '';
 let ilsSel = null, ilsListTop = 0;                // geöffnete ILS (Detail) bzw. Scrollstand der Liste
 let ilsNow = null;                                // in dieser Sitzung ermittelte zuständige ILS – für den Knopf
@@ -1595,12 +1598,17 @@ async function loadIls(){
     if(!r.ok) throw new Error('HTTP ' + r.status);
     const d = validIls(await r.json());
     if(!d.length) throw new Error('leer');
-    ilsData = d; ilsDataErr = '';
+    ilsBase = d; ilsDataErr = '';
     try{ localStorage.setItem(ILS_KEY, JSON.stringify(d)); }catch(e){}
+    // Eigene Änderungen, die der Server inzwischen hat (oder hochgeladen und älter als 1 Tag), sind erledigt
+    const vorher = ilsEdits.length;
+    ilsEdits = ilsEdits.filter(ed => !d.some(x => ilsSig(x) === ilsSig(ed.e)) && !(ed.up && Date.now() - (ed.t || 0) > 864e5));
+    if(ilsEdits.length !== vorher) saveIlsEdits();
   }catch(e){
-    if(!ilsData.length){ try{ ilsData = validIls(JSON.parse(localStorage.getItem(ILS_KEY) || '[]')); }catch(_){ ilsData = []; } }
-    ilsDataErr = ilsData.length ? '' : 'Leitstellen-Daten nicht ladbar (leitstellen.json) – Netz prüfen.';
+    if(!ilsBase.length){ try{ ilsBase = validIls(JSON.parse(localStorage.getItem(ILS_KEY) || '[]')); }catch(_){ ilsBase = []; } }
+    ilsDataErr = ilsBase.length ? '' : 'Leitstellen-Daten nicht ladbar (leitstellen.json) – Netz prüfen.';
   }
+  ilsData = validIls(applyIlsEdits(ilsBase, ilsEdits));
   updIlsInfo();
   if($('#ovIls').classList.contains('show')) renderIls();
   if(ilsLastP) pruefeIls(ilsLastP);   // erste Standortmeldung kam evtl. vor den Daten
@@ -1635,8 +1643,136 @@ function updIlsBtn(){
   $('#btnIls').title = ilsNow ? `Zuständig: ${ilsNow} – alle Leitstellen anzeigen` : 'Leitstellen';
 }
 function updIlsInfo(){
-  const n = ilsData.filter(e => e.funk.length).length;
-  $('#ilsInfo').textContent = ilsData.length ? `leitstellen.json: ${ilsData.length} Leitstellen, davon ${n} mit Funkgruppen.` : (ilsDataErr || 'Leitstellen werden geladen …');
+  const n = ilsData.filter(e => e.funk.length).length, offen = ilsEdits.filter(x => !x.up).length;
+  $('#ilsInfo').textContent = ilsData.length ? `leitstellen.json: ${ilsData.length} Leitstellen, davon ${n} mit Funkgruppen.` +
+    (offen ? ` ${offen} eigene Änderung${offen === 1 ? '' : 'en'} noch nicht auf dem Server.` : '') : (ilsDataErr || 'Leitstellen werden geladen …');
+}
+
+/* Leitstellen selbst bearbeiten – Änderung gilt sofort auf diesem Handy, mit GitHub-Schlüssel auch auf dem Server
+   (leitstellen.json + leitstellen-index.json für den Siri-Kurzbefehl „Aktuelle Leitstelle“) */
+const ilsSig = e => JSON.stringify([e.name, e.sitz || '', +(+e.lat).toFixed(6), +(+e.lon).toFixed(6), e.kreise || [], e.funk || []]);
+function saveIlsEdits(){ try{ localStorage.setItem(ILS_EDIT_KEY, JSON.stringify(ilsEdits)); }catch(e){} }
+function applyIlsEdits(list, edits){
+  const out = list.slice();
+  for(const ed of edits){
+    const i = out.findIndex(x => x && (x.name === ed.orig || x.name === ed.e.name));
+    if(i >= 0) out[i] = { ...out[i], ...ed.e };   // unbekannte Felder bleiben erhalten
+  }
+  return out;
+}
+const ilsEditOf = name => ilsEdits.find(x => x.e.name === name);
+// Datei-Format wie bisher: eine Leitstelle pro Zeile, Schreibweise wie Python json.dumps
+function pyJson(v){
+  if(Array.isArray(v)) return '[' + v.map(pyJson).join(', ') + ']';
+  if(v && typeof v === 'object') return '{' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ': ' + pyJson(x)).join(', ') + '}';
+  return JSON.stringify(v);
+}
+function ilsSerialize(list){
+  const ORDER = ['name', 'sitz', 'lat', 'lon', 'kreise', 'funk'];
+  return '[\n' + list.map(x => {
+    const o = {};
+    for(const k of ORDER) if(k in x && !(k === 'funk' && (!Array.isArray(x.funk) || !x.funk.length))) o[k] = x[k];
+    for(const k of Object.keys(x)) if(!ORDER.includes(k)) o[k] = x[k];
+    return '  ' + pyJson(o);
+  }).join(',\n') + '\n]\n';
+}
+// Siri-Index Landkreis → ILS – identisch zu kurzbefehl/gen_kurzbefehl.py
+const kbSchluessel = n => String(n).toLowerCase().replace(/^(landkreis|kreisfreie stadt|stadt|kreis)\s+/, '')
+  .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss').replace(/[^a-z0-9]/g, '');
+const kbAusschreiben = s => s.replace(/\ba\.\s*d\.\s*/gi, 'an der ').replace(/\bi\.\s*d\.\s*/gi, 'in der ')
+  .replace(/\ba\.\s*/gi, 'am ').replace(/\bi\.\s*/gi, 'im ').replace(/OPf\./g, 'Oberpfalz');
+function kbSchreibweisen(k){
+  const basis = k.replace(/\s*\((Stadt|Landkreis)\)\s*$/, '');
+  const v = new Set([basis, kbAusschreiben(basis)]);
+  for(const x of [...v]) v.add(x.replace(/\s*\([^)]*\)\s*$/, ''));
+  return v;
+}
+function ilsIndex(list){
+  const idx = {};
+  for(const e of list) for(const k of e.kreise) for(const w of kbSchreibweisen(k)){
+    const key = kbSchluessel(w); if(!key) continue;
+    if(idx[key] && idx[key] !== e.name) throw new Error(`„${k}“ ist sowohl bei ${idx[key]} als auch bei ${e.name} eingetragen`);
+    idx[key] = e.name;
+  }
+  return idx;
+}
+function ilsIndexText(idx){
+  const keys = Object.keys(idx).sort();
+  return '{\n  "_hinweis": "Automatisch erzeugt aus leitstellen.json mit kurzbefehl/gen_kurzbefehl.py – Landkreis-Schlüssel → ILS für den Siri-Kurzbefehl „Aktuelle Leitstelle“. Funkgruppen stehen in leitstellen.json.",\n' +
+    keys.map(k => `  ${JSON.stringify(k)}: ${JSON.stringify(idx[k])}`).join(',\n') + '\n}\n';
+}
+async function uploadIls(silent){
+  if(!ghOn()){
+    if(!silent){ closeAll(); openSettings(); setTimeout(() => $('#ghToken').scrollIntoView({ block:'center' }), 60); toast('Erst den GitHub-Schlüssel eintragen', 3000); }
+    return;
+  }
+  const offen = ilsEdits.filter(x => !x.up);
+  if(!offen.length){ if(!silent) toast('Keine offenen Änderungen'); return; }
+  if(ilsUploading) return;
+  ilsUploading = true; renderIls();
+  try{
+    for(let attempt = 0; attempt < 3; attempt++){
+      const d = await ghReq('GET', null, 'leitstellen.json');
+      let remote; try{ remote = JSON.parse(b64dec(d.content || '')); }catch(e){ throw new Error('leitstellen.json auf GitHub ist fehlerhaft'); }
+      if(!Array.isArray(remote) || !remote.length) throw new Error('leitstellen.json auf GitHub ist leer');
+      const neu = applyIlsEdits(remote, offen);
+      const idx = ilsIndex(validIls(neu));            // bricht ab, wenn ein Landkreis doppelt vergeben ist
+      const msg = 'ZNA-Navi: Leitstelle ' + offen.map(x => x.e.name).join(', ') + ' geändert';
+      try{ await ghReq('PUT', { message: msg, content: b64enc(ilsSerialize(neu)), sha: d.sha, branch: gh().branch }, 'leitstellen.json'); }
+      catch(e){ if(e.conflict && attempt < 2) continue; throw e; }
+      const di = await ghReq('GET', null, 'leitstellen-index.json', true), itxt = ilsIndexText(idx);
+      if(!di || b64dec(di.content || '') !== itxt)
+        await ghReq('PUT', { message: 'ZNA-Navi: leitstellen-index.json (Siri) aktualisiert', content: b64enc(itxt), ...(di ? { sha: di.sha } : {}), branch: gh().branch }, 'leitstellen-index.json');
+      offen.forEach(x => { x.up = true; x.t = Date.now(); });
+      saveIlsEdits();
+      toast('Leitstelle auf den Server hochgeladen ✓ – gilt in 1–2 Min. auch für Siri', 3500);
+      break;
+    }
+  }catch(e){ toast('Hochladen fehlgeschlagen: ' + e.message, 5000); }
+  ilsUploading = false; updIlsInfo(); renderIls();
+}
+function ilsEditorHTML(e){
+  const ed = ilsEditOf(e.name);
+  return `<button class="back" type="button" id="ilsEdCancel">Abbrechen</button>
+    <div class="ilsdet">
+      <label for="ilsEdName">Name</label><input class="field" id="ilsEdName" value="${esc(e.name)}">
+      <label for="ilsEdSitz">Sitz</label><input class="field" id="ilsEdSitz" value="${esc(e.sitz)}">
+      <label for="ilsEdCoords">Ort der ILS (Breite, Länge) – für die Entfernung</label>
+      <input class="field" id="ilsEdCoords" value="${(+e.lat).toFixed(6)}, ${(+e.lon).toFixed(6)}" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <label for="ilsEdFunk">Funkgruppen – eine pro Zeile</label>
+      <textarea class="field" id="ilsEdFunk" rows="4" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="RD_ILS_ED – Kurzwahl 1913&#10;RD_Betten_ED – Kurzwahl 1912 (Bettenanforderung)">${esc(e.funk.join('\n'))}</textarea>
+      <div class="hint">Siri liest „Kurzwahl 1913“ Ziffer für Ziffer, RD_Betten_… als „Bettenkanal“, RD_ILS_… und RD_1_… als „Rettungsdienst“.</div>
+      <label for="ilsEdKreise">Zuständige Landkreise / kreisfreie Städte – einer pro Zeile</label>
+      <textarea class="field" id="ilsEdKreise" rows="5" autocapitalize="words" spellcheck="false">${esc(e.kreise.join('\n'))}</textarea>
+      <div class="hint">Schreibweise wie Landratsamt/AVBayRDG, z. B. „Mühldorf a.Inn“, „Rosenheim (Stadt)“, „Rosenheim (Landkreis)“.</div>
+      <div class="hint">${ghOn() ? (gh().auto !== false ? 'Wird nach dem Speichern auf den Server hochgeladen – dann gilt die Änderung auf allen Handys und für Siri.' : 'Nach dem Speichern über „Jetzt hochladen“ auf den Server bringen.')
+        : 'Wird nur auf diesem Handy gespeichert, bis „Hochladen zum Server“ in den Einstellungen eingerichtet ist. Siri nutzt die Daten vom Server.'}</div>
+      <div class="row" style="margin-top:14px">${ed && !ed.up ? '<button class="btn danger" type="button" id="ilsEdDiscard">Eigene Änderung verwerfen</button>' : ''}<button class="btn primary" type="button" id="ilsEdSave">Speichern</button></div>
+    </div>`;
+}
+function ilsEditSave(){
+  const old = ilsData.find(x => x.name === ilsSel); if(!old) return;
+  const lines = id => $(id).value.split(/\r?\n/).map(x => x.trim().replace(/\s+/g, ' ')).filter(Boolean);
+  const name = $('#ilsEdName').value.trim().replace(/\s+/g, ' '), c = parseCoords($('#ilsEdCoords').value), kreise = lines('#ilsEdKreise');
+  if(!name) return toast('Bitte einen Namen eingeben');
+  if(ilsData.some(x => x !== old && x.name.toLowerCase() === name.toLowerCase())) return toast(`„${name}“ gibt es schon`);
+  if(!c) return toast('Ort nicht erkannt – Format: 48.123456, 11.654321', 3500);
+  if(!kreise.length) return toast('Mindestens einen Landkreis eintragen');
+  const e = { name, sitz: $('#ilsEdSitz').value.trim(), lat: +c.lat.toFixed(6), lon: +c.lon.toFixed(6), kreise, funk: lines('#ilsEdFunk') };
+  try{ ilsIndex(ilsData.map(x => x === old ? e : x)); }catch(err){ return toast(err.message, 5000); }
+  if(ilsSig(e) === ilsSig(old)){ ilsEditing = false; renderIls(true); return toast('Keine Änderung'); }
+  const ed = ilsEditOf(old.name);
+  const orig = ed ? ed.orig : old.name;
+  ilsEdits = ilsEdits.filter(x => x !== ed);
+  const base = ilsBase.find(x => x.name === orig);
+  if(!(base && ilsSig(base) === ilsSig(e))) ilsEdits.push({ orig, e, up:false, t:Date.now() });   // zurück auf Serverstand = keine Änderung
+  saveIlsEdits();
+  if(state.settings.ilsLast === old.name){ state.settings.ilsLast = name; save(); }   // Umbenennen ist kein Leitstellenwechsel
+  if(ilsNow === old.name){ ilsNow = name; updIlsBtn(); }
+  ilsData = validIls(applyIlsEdits(ilsBase, ilsEdits));
+  ilsSel = name; ilsEditing = false; updIlsInfo(); renderIls(true); $('#ovIls .sheet').scrollTop = 0;
+  toast('Gespeichert');
+  if(ghOn() && gh().auto !== false) uploadIls(true);
 }
 
 /* Ansicht */
@@ -1644,7 +1780,7 @@ const ICON_ILS = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-widt
 const funkHTML = f => f.length ? `<div class="funk">📻 ${f.map(esc).join('<br>📻 ')}</div>` : '';
 function openIls(name){
   closeAll();
-  ilsSel = name || null; ilsListTop = 0;
+  ilsSel = name || null; ilsListTop = 0; ilsEditing = false;
   renderIls(); $('#ovIls').classList.add('show'); $('#ovIls .sheet').scrollTop = 0;
   if(!ilsData.length) loadIls();
   ilsRefresh(false);
@@ -1661,7 +1797,8 @@ async function ilsRefresh(force){
     }
   }finally{ ilsBusy = false; renderIls(); }
 }
-function renderIls(){
+function renderIls(force){
+  if(ilsEditing && !force) return;   // offenes Formular nicht überschreiben
   const body = $('#ilsBody');
   const k = kreisFuer(pos), zust = inBayern(k) ? zustaendigeILS(k.name) : null;
   const list = ilsData.map(e => ({ e, d: pos ? haversine(pos, e) : null }));
@@ -1671,15 +1808,21 @@ function renderIls(){
   // Detail einer ILS
   const sel = ilsSel && list.find(x => x.e.name === ilsSel);
   if(sel){
-    const { e, d } = sel, isZ = !!zust && zust.name === e.name;
+    const { e, d } = sel, isZ = !!zust && zust.name === e.name, ed = ilsEditOf(e.name);
     $('#ilsTitle').textContent = e.name;
+    if(ilsEditing){ body.innerHTML = ilsEditorHTML(e); return; }
+    const status = !ed ? '' : ed.up ? '<div class="ilsnote" style="background:var(--infobg);color:var(--infotext)">Eigene Änderung hochgeladen – der Server übernimmt sie in 1–2 Minuten.</div>'
+      : `<div class="ilsnote"><b>Eigene Änderung – nur auf diesem Handy.</b> Siri und das zweite Handy kennen sie erst nach dem Hochladen.<div class="row" style="margin-top:8px">${
+        ilsUploading ? '<button class="btn small" disabled>Wird hochgeladen …</button>' : ghOn() ? '<button class="btn small ok" type="button" id="ilsUp">Jetzt hochladen</button>' : '<button class="btn small" type="button" id="ilsUpSetup">Hochladen einrichten</button>'}</div></div>`;
     body.innerHTML = `<button class="back" type="button" id="ilsBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Alle Leitstellen</button>
       <div class="ilsdet">
         ${isZ ? `<div class="zcard" style="cursor:default"><small>📍 An deinem Standort zuständig</small><span class="kreis">${esc(k.name)}</span></div>` : ''}
         <div class="help"><b>${esc(e.name)}</b>${d != null ? ` · ≈ ${fmtDist(d)} Luftlinie` : ''}</div>
         <h3>Sitz</h3><div class="help">${esc(e.sitz || '–')}</div>
         <h3>Zuständigkeitsbereich</h3><div class="help"><ul>${e.kreise.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
-        <h3>Funkgruppen</h3><div class="help">${e.funk.length ? e.funk.map(f => '📻 ' + esc(f)).join('<br>') : 'Keine Funkgruppen hinterlegt – in <code>leitstellen.json</code> im Feld <code>"funk"</code> ergänzen.'}</div>
+        <h3>Funkgruppen</h3><div class="help">${e.funk.length ? e.funk.map(f => '📻 ' + esc(f)).join('<br>') : 'Keine Funkgruppen hinterlegt – über „Bearbeiten“ ergänzen.'}</div>
+        ${status}
+        <div class="row" style="margin-top:12px"><button class="btn" type="button" id="ilsEdit">✏️ Bearbeiten</button></div>
         <div class="hint">Zuständigkeit nach AVBayRDG Anlage 1 (Rettungsdienstbereiche). Entfernung: Luftlinie zum Ort der ILS (Ortsmitte, ungefähr).</div>
       </div>`;
     return;
@@ -1698,7 +1841,8 @@ function renderIls(){
   }else html += `<div class="ilsstat">📍 ${esc(ilsPosErr || 'Standort unbekannt')} – Liste alphabetisch · <button type="button" id="ilsNeu">nochmal versuchen</button></div>`;
   html += list.map(({ e, d }) => tileHTML({ cls: ' ils' + (zust && zust.name === e.name ? ' zust' : ''), href: '#', attrs: `data-ils="${esc(e.name)}"`,
     icon: ICON_ILS, name: e.name, title: `${e.name} – ${e.kreise.join(', ')}`, dist: d != null ? '≈ ' + fmtDist(d) : '',
-    meta: `<span class="info">${esc(e.kreise.join(', '))}</span>`, right: e.funk.length ? '<span class="gtag">📻 Funk</span>' : '' })).join('');
+    meta: `<span class="info">${esc(e.kreise.join(', '))}</span>`,
+    right: (ilsEditOf(e.name) && !ilsEditOf(e.name).up) ? '<span class="gtag">✎ nur hier</span>' : e.funk.length ? '<span class="gtag">📻 Funk</span>' : '' })).join('');
   body.innerHTML = html;
 }
 $('#btnIls').onclick = () => openIls(null);
@@ -1706,6 +1850,18 @@ $('#ilsBody').addEventListener('click', e => {
   const sh = $('#ovIls .sheet');
   if(e.target.closest('#ilsNeu')){ ilsRefresh(true); return; }
   if(e.target.closest('#ilsBack')){ ilsSel = null; renderIls(); sh.scrollTop = ilsListTop; return; }
+  if(e.target.closest('#ilsEdit')){ ilsEditing = true; renderIls(true); sh.scrollTop = 0; return; }
+  if(e.target.closest('#ilsEdCancel')){ ilsEditing = false; renderIls(true); sh.scrollTop = 0; return; }
+  if(e.target.closest('#ilsEdSave')){ ilsEditSave(); return; }
+  if(e.target.closest('#ilsEdDiscard')){
+    const ed = ilsEditOf(ilsSel); if(!ed) return;
+    if(!confirm(`Eigene Änderung an „${ilsSel}“ verwerfen und den Stand vom Server nehmen?`)) return;
+    ilsEdits = ilsEdits.filter(x => x !== ed); saveIlsEdits();
+    ilsData = validIls(applyIlsEdits(ilsBase, ilsEdits)); ilsSel = ed.orig; ilsEditing = false; updIlsInfo(); renderIls(true);
+    toast('Stand vom Server wiederhergestellt'); return;
+  }
+  if(e.target.closest('#ilsUp')){ uploadIls(false); return; }
+  if(e.target.closest('#ilsUpSetup')){ uploadIls(false); return; }
   const t = e.target.closest('[data-ils]'); if(!t) return;
   e.preventDefault();
   ilsListTop = sh.scrollTop; ilsSel = t.dataset.ils; renderIls(); sh.scrollTop = 0;
@@ -1836,7 +1992,7 @@ if('serviceWorker' in navigator && location.protocol === 'https:'){
 }
 
 window.__zna = { serialize, navIndex, parseImport, parseCoords, parseW3W, navUrl, geocode, exportText, changesSince, upload, checkServer, localChanges, state: () => state,
-  ils: { norm, kreisSchluessel, zustaendigeILS, data: () => ilsData, pruefeIls, meldeIlsWechsel, openIls, merkeKreis, renderIls } };
+  ils: { norm, kreisSchluessel, zustaendigeILS, data: () => ilsData, ilsIndex, ilsIndexText, ilsSerialize, applyIlsEdits, uploadIls, edits: () => ilsEdits, pruefeIls, meldeIlsWechsel, openIls, merkeKreis, renderIls } };
 })();
 </script>
 </body>
