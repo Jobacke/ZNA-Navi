@@ -473,7 +473,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.16.1';
+const APP_VERSION = '1.16.2';
 const APP_DATE = '2026-11-16';
 
 /* ---------- Speicher ---------- */
@@ -1690,7 +1690,9 @@ function kbSchreibweisen(k){
 // Ansage für Siri – identisch zu FUNK_ERSETZEN / NAME_ERSETZEN in kurzbefehl/gen_kurzbefehl.py
 const kbFunk = f => f.join('. ').replace(/RD_Betten_[A-Za-z0-9]+/g, 'Bettenkanal').replace(/RD_ILS_[A-Za-z0-9]+/g, 'Rettungsdienst')
   .replace(/RD_[0-9]+_[A-Za-z0-9]+/g, 'Rettungsdienst').replace(/\s*[–-]?\s*\(?Bettenanforderung\)?/g, '').replace(/[()]/g, '')
-  .replace(/\s*–\s*/g, ', ').replace(/_/g, ' ').replace(/([0-9])(?=[0-9])/g, '$1 ');
+  .replace(/\s*–\s*/g, ', ').replace(/_/g, ' ').replace(/([0-9])(?=[0-9])/g, '$1, ')
+  .replace(/[0-9]/g, z => KB_ZIFFERN[z]);   // Ziffern als Wörter wie im Funk, mit Pausen – sonst „3. Rettungsdienst“ = Aufzählung
+const KB_ZIFFERN = ['null', 'eins', 'zwo', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun'];
 const kbName = n => n.replace(/^ILS\s+/, 'Leitstelle ').replace(/\bFFB\b/g, 'Fürstenfeldbruck').replace(/\s*\/\s*/g, ' und ');
 function ilsIndex(list){
   const idx = {};

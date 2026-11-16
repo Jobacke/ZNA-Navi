@@ -60,6 +60,7 @@ def baue_index(ils):
     return dict(sorted(idx.items()))
 
 # ---------------------------------------------------------------- Ansage-Text (identisch im Kurzbefehl)
+ZIFFERN = [('0', 'null'), ('1', 'eins'), ('2', 'zwo'), ('3', 'drei'), ('4', 'vier'), ('5', 'fünf'), ('6', 'sechs'), ('7', 'sieben'), ('8', 'acht'), ('9', 'neun')]
 FUNK_ERSETZEN = [   # (Suche, Ersatz) – reguläre Ausdrücke, nacheinander
     (r"RD_Betten_[A-Za-z0-9]+", "Bettenkanal"),
     (r"RD_ILS_[A-Za-z0-9]+", "Rettungsdienst"),
@@ -68,8 +69,9 @@ FUNK_ERSETZEN = [   # (Suche, Ersatz) – reguläre Ausdrücke, nacheinander
     (r"[()]", ""),
     (r"\s*–\s*", ", "),
     (r"_", " "),
-    (r"([0-9])(?=[0-9])", "$1 "),           # Kurzwahl Ziffer für Ziffer: 1913 → 1 9 1 3
-]
+    (r"([0-9])(?=[0-9])", "$1, "),          # Kurzwahl Ziffer für Ziffer mit Pause: 1913 → 1, 9, 1, 3
+] + [(z, w) for z, w in ZIFFERN]           # … als Wörter wie im Funk (zwo statt zwei): eins, neun, eins, drei –
+                                           # keine Ziffer am Satzende, sonst liest Siri „3. Rettungsdienst“ als Aufzählung
 NAME_ERSETZEN = [(r"^ILS\s+", "Leitstelle "), (r"\bFFB\b", "Fürstenfeldbruck"), (r"\s*/\s*", " und ")]
 KREIS_ERSETZEN = [(r"\ba\.\s*d\.\s*", "an der "), (r"\bi\.\s*d\.\s*", "in der "), (r"\ba\.\s*", "am "),
                   (r"\bi\.\s*", "im "), (r"OPf\.", "Oberpfalz")]
