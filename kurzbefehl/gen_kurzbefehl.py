@@ -1,16 +1,17 @@
 """Erzeugt den Siri-Kurzbefehl „Aktuelle Leitstelle“ (unsigniert) und die Nachschlagetabelle leitstellen-index.json.
 
 Aufruf (im Repo-Ordner):  python3 kurzbefehl/gen_kurzbefehl.py
-Neu erzeugen nur nötig, wenn sich in leitstellen.json die Landkreise (Feld "kreise") oder ILS-Namen ändern.
-Funkgruppen ("funk") liest der Kurzbefehl bei jedem Aufruf direkt aus leitstellen.json – dafür nichts neu erzeugen.
+leitstellen-index.json enthält je Landkreis-Schlüssel die fertige Ansage (Name + Funkgruppen). Die App ZNA-Navi
+erneuert die Datei beim Hochladen jeder Leitstellen-Änderung (gleiche Logik in index.html: ilsIndex/ilsIndexText).
+Nur wenn leitstellen.json direkt auf GitHub geändert wird: dieses Skript laufen lassen.
 
 Ablauf des Kurzbefehls:
-  Standort → Landkreis (OpenStreetMap/Nominatim, wie in der App) → Schlüssel → leitstellen-index.json → ILS-Name
-  → Eintrag in leitstellen.json → Funkgruppen → Ansage per Siri.
+  Standort → Landkreis (OpenStreetMap/Nominatim, wie in der App) → Schlüssel → leitstellen-index.json
+  → Ansage per Siri. (Bewusst ohne Schleifen und Textvergleiche – die übernimmt iOS beim Import nicht zuverlässig.)
 """
 import json, os, plistlib, re, uuid
 
-KB_VERSION = "1.1"
+KB_VERSION = "1.2"
 BASIS = "https://zna.vjbackhaus.de/"
 HIER = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HIER)
@@ -42,6 +43,9 @@ def schreibweisen(kreis):
         v.add(ohne)
     return v
 
+HINWEIS = ("Automatisch erzeugt aus leitstellen.json (App ZNA-Navi beim Hochladen bzw. kurzbefehl/gen_kurzbefehl.py) – "
+           "Landkreis-Schlüssel → ILS mit Ansage und Funkgruppen für den Siri-Kurzbefehl „Aktuelle Leitstelle“.")
+
 def baue_index(ils):
     idx = {}
     for e in ils:
@@ -49,9 +53,10 @@ def baue_index(ils):
             for w in schreibweisen(k):
                 key = schluessel(w)
                 if not key: continue
-                if idx.get(key, e["name"]) != e["name"]:
-                    raise SystemExit(f"Schlüssel „{key}“ passt zu {idx[key]} und {e['name']} – bitte prüfen")
-                idx[key] = e["name"]
+                if key in idx and idx[key]["ils"] != e["name"]:
+                    raise SystemExit(f"Schlüssel „{key}“ passt zu {idx[key]['ils']} und {e['name']} – bitte prüfen")
+                idx[key] = {"ils": e["name"], "name": py_ersetzen(e["name"], NAME_ERSETZEN),
+                            "funk": py_ersetzen(". ".join(e.get("funk", [])), FUNK_ERSETZEN)}
     return dict(sorted(idx.items()))
 
 # ---------------------------------------------------------------- Ansage-Text (identisch im Kurzbefehl)
@@ -146,7 +151,7 @@ def wenn_ende(g): act("conditional", GroupingIdentifier=g, WFControlFlowMode=2, 
 # Nur „hat (keinen) Wert“ – Textvergleiche (ist / enthält) übernimmt iOS beim Import nicht
 HAT_WERT, HAT_KEINEN_WERT = 100, 101
 NICHT_BAYERN = r"^(?!.*Bayern).*$"     # leer, wenn das Land nicht „Bayern“ enthält
-GLEICH = r"^(.*)\|\1$"                # „A|B“ wird leer, wenn A und B gleich sind
+
 
 def bauen():
     A.clear()
@@ -202,31 +207,16 @@ def bauen():
     i = U()
     act("getvalueforkey", UUID=i, WFInput=att(out(idx, "Inhalte der URL", dict_coerce=True)),
         WFDictionaryKey=tok(var("Schluessel")), WFGetDictionaryValueType="Value")
-    setvar("ILS", out(i, "Wörterbuchwert"))
+    setvar("Treffer", out(i, "Wörterbuchwert"))
 
-    g = U(); wenn_start(g, WFCondition=HAT_KEINEN_WERT, WFInput=bedingung_input(var("ILS")))
+    g = U(); wenn_start(g, WFCondition=HAT_KEINEN_WERT, WFInput=bedingung_input(var("Treffer")))
     sprechen(tok("Für ", var("KreisSprech"), " wurde keine Leitstelle gefunden."))
     act("exit")
     wenn_ende(g)
 
-    # 4) Eintrag der ILS in leitstellen.json suchen → Funkgruppen
-    ls = laden(BASIS + "leitstellen.json")
-    setvar("Liste", out(ls, "Inhalte der URL"))
-    r = U(); act("repeat.each", GroupingIdentifier=r, WFControlFlowMode=0, WFInput=att(var("Liste")))
-    n = wert(var("Repeat Item", dict_coerce=True), "name")
-    paar = text(tok(out(n, "Wörterbuchwert"), "|", var("ILS")))
-    gl = ersetzen(out(paar, "Text"), [(GLEICH, "")])
-    g = U(); wenn_start(g, WFCondition=HAT_KEINEN_WERT, WFInput=bedingung_input(gl))
-    setvar("Treffer", var("Repeat Item"))
-    wenn_ende(g)
-    act("repeat.each", GroupingIdentifier=r, WFControlFlowMode=2, UUID=U())
-
-    f = wert(var("Treffer", dict_coerce=True), "funk")
-    c = U(); act("text.combine", UUID=c, text=att(out(f, "Wörterbuchwert")), WFTextSeparator="Custom", WFTextCustomSeparator=". ")
-    setvar("Funk", ersetzen(out(c, "Kombinierter Text"), FUNK_ERSETZEN))
-    setvar("Name", ersetzen(var("ILS"), NAME_ERSETZEN))
-
-    # 5) Ansage
+    # 4) Ansage – Name und Funkgruppen stehen fertig im Index
+    setvar("Name", out(wert(var("Treffer", dict_coerce=True), "name"), "Wörterbuchwert"))
+    setvar("Funk", out(wert(var("Treffer", dict_coerce=True), "funk"), "Wörterbuchwert"))
     g = U(); wenn_start(g, WFCondition=HAT_WERT, WFInput=bedingung_input(var("Funk")))
     sprechen(tok("Zuständig ist die ", var("Name"), ". ", var("KreisSprech"), ". ", var("Funk"), "."))
     sonst(g)
@@ -251,7 +241,7 @@ if __name__ == "__main__":
     ils = json.load(open(os.path.join(REPO, "leitstellen.json"), encoding="utf-8"))
     idx = baue_index(ils)
     with open(os.path.join(REPO, "leitstellen-index.json"), "w", encoding="utf-8") as fh:
-        fh.write("{\n  \"_hinweis\": \"Automatisch erzeugt aus leitstellen.json mit kurzbefehl/gen_kurzbefehl.py – Landkreis-Schlüssel → ILS für den Siri-Kurzbefehl „Aktuelle Leitstelle“. Funkgruppen stehen in leitstellen.json.\",\n"
+        fh.write("{\n  \"_hinweis\": " + json.dumps(HINWEIS, ensure_ascii=False) + ",\n"
                  + ",\n".join(f"  {json.dumps(k, ensure_ascii=False)}: {json.dumps(v, ensure_ascii=False)}" for k, v in idx.items()) + "\n}\n")
     with open(os.path.join(HIER, "Aktuelle Leitstelle.unsigned.shortcut"), "wb") as fh:
         plistlib.dump(bauen(), fh, fmt=plistlib.FMT_BINARY)

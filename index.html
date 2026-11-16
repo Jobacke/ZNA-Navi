@@ -324,7 +324,7 @@
         <li>Am Mac im Repo-Ordner: <code>bash kurzbefehl/signieren.sh</code> → <b>Aktuelle Leitstelle.shortcut</b> doppelklicken → hinzufügen</li>
         <li>Einmal am iPhone mit entsperrtem Bildschirm starten und Standort sowie Zugriff auf <b>nominatim.openstreetmap.org</b> und <b>zna.vjbackhaus.de</b> mit „Immer erlauben“ freigeben</li>
       </ol>
-      Kurzwahlen kommen live aus <code>leitstellen.json</code>. Änderst du Landkreise in der App, erneuert sie beim Hochladen auch <code>leitstellen-index.json</code>.
+      Siri liest Leitstelle und Kurzwahlen aus <code>leitstellen-index.json</code> – die App erneuert die Datei beim Hochladen jeder Leitstellen-Änderung. Änderst du <code>leitstellen.json</code> direkt auf GitHub, danach am Mac <code>python3 kurzbefehl/gen_kurzbefehl.py</code> ausführen.
     </div>
 
     <h3>Blitzer.de PRO</h3>
@@ -473,7 +473,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.16.0';
+const APP_VERSION = '1.16.1';
 const APP_DATE = '2026-11-16';
 
 /* ---------- Speicher ---------- */
@@ -1687,19 +1687,25 @@ function kbSchreibweisen(k){
   for(const x of [...v]) v.add(x.replace(/\s*\([^)]*\)\s*$/, ''));
   return v;
 }
+// Ansage für Siri – identisch zu FUNK_ERSETZEN / NAME_ERSETZEN in kurzbefehl/gen_kurzbefehl.py
+const kbFunk = f => f.join('. ').replace(/RD_Betten_[A-Za-z0-9]+/g, 'Bettenkanal').replace(/RD_ILS_[A-Za-z0-9]+/g, 'Rettungsdienst')
+  .replace(/RD_[0-9]+_[A-Za-z0-9]+/g, 'Rettungsdienst').replace(/\s*[–-]?\s*\(?Bettenanforderung\)?/g, '').replace(/[()]/g, '')
+  .replace(/\s*–\s*/g, ', ').replace(/_/g, ' ').replace(/([0-9])(?=[0-9])/g, '$1 ');
+const kbName = n => n.replace(/^ILS\s+/, 'Leitstelle ').replace(/\bFFB\b/g, 'Fürstenfeldbruck').replace(/\s*\/\s*/g, ' und ');
 function ilsIndex(list){
   const idx = {};
   for(const e of list) for(const k of e.kreise) for(const w of kbSchreibweisen(k)){
     const key = kbSchluessel(w); if(!key) continue;
-    if(idx[key] && idx[key] !== e.name) throw new Error(`„${k}“ ist sowohl bei ${idx[key]} als auch bei ${e.name} eingetragen`);
-    idx[key] = e.name;
+    if(idx[key] && idx[key].ils !== e.name) throw new Error(`„${k}“ ist sowohl bei ${idx[key].ils} als auch bei ${e.name} eingetragen`);
+    idx[key] = { ils: e.name, name: kbName(e.name), funk: kbFunk(e.funk || []) };
   }
   return idx;
 }
+const ILS_INDEX_HINWEIS = 'Automatisch erzeugt aus leitstellen.json (App ZNA-Navi beim Hochladen bzw. kurzbefehl/gen_kurzbefehl.py) – Landkreis-Schlüssel → ILS mit Ansage und Funkgruppen für den Siri-Kurzbefehl „Aktuelle Leitstelle“.';
 function ilsIndexText(idx){
   const keys = Object.keys(idx).sort();
-  return '{\n  "_hinweis": "Automatisch erzeugt aus leitstellen.json mit kurzbefehl/gen_kurzbefehl.py – Landkreis-Schlüssel → ILS für den Siri-Kurzbefehl „Aktuelle Leitstelle“. Funkgruppen stehen in leitstellen.json.",\n' +
-    keys.map(k => `  ${JSON.stringify(k)}: ${JSON.stringify(idx[k])}`).join(',\n') + '\n}\n';
+  return '{\n  "_hinweis": ' + JSON.stringify(ILS_INDEX_HINWEIS) + ',\n' +
+    keys.map(k => `  ${JSON.stringify(k)}: ${pyJson(idx[k])}`).join(',\n') + '\n}\n';
 }
 async function uploadIls(silent){
   if(!ghOn()){
