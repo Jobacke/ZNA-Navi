@@ -473,7 +473,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.16.3';
+const APP_VERSION = '1.16.4';
 const APP_DATE = '2026-11-18';
 
 /* ---------- Speicher ---------- */
@@ -568,12 +568,60 @@ function haversine(a, b){
   return 2*R*Math.asin(Math.sqrt(h));
 }
 const fmtDist = m => m < 1000 ? Math.round(m/10)*10 + ' m' : (m/1000).toLocaleString('de-DE',{maximumFractionDigits: m<10000?1:0}) + ' km';
+function getPosFromParent(timeoutMs = 10000){
+  return new Promise((res, rej) => {
+    if(!(window.self !== window.top && window.parent)) return rej(new Error('Nicht im Board'));
+    const reqId = 'geo_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    let done = false;
+    const timer = setTimeout(() => {
+      if(done) return;
+      done = true;
+      window.removeEventListener('message', onMsg);
+      rej(new Error('Standort nicht verfügbar'));
+    }, timeoutMs);
+    function onMsg(ev){
+      const d = ev.data;
+      if(!d || d.type !== 'board-geolocation-result' || (d.reqId && d.reqId !== reqId)) return;
+      if(done) return;
+      done = true;
+      clearTimeout(timer);
+      window.removeEventListener('message', onMsg);
+      if(d.ok && d.coords) res(d.coords);
+      else rej(new Error(d.code === 1 ? 'Standortzugriff verweigert' : 'Standort nicht verfügbar'));
+    }
+    window.addEventListener('message', onMsg);
+    try { window.parent.postMessage({ type: 'board-get-geolocation', reqId }, '*'); }
+    catch(e) { clearTimeout(timer); window.removeEventListener('message', onMsg); rej(e); }
+  });
+}
+window.addEventListener('message', ev => {
+  const d = ev.data;
+  if(d && d.type === 'board-geolocation-result' && d.ok && d.coords){
+    pos = d.coords;
+    byDistance = true;
+    $('#btnNearest').classList.add('on');
+    $('#locBanner').hidden = true;
+    render();
+  }
+});
 function getPos(){
   return new Promise((res, rej) => {
-    if(!navigator.geolocation) return rej(new Error('Standort wird nicht unterstützt'));
+    const inFrame = (() => { try { return window.self !== window.top; } catch(e) { return true; } })();
+    if(!navigator.geolocation){
+      if(inFrame) return getPosFromParent().then(res, rej);
+      return rej(new Error('Standort wird nicht unterstützt'));
+    }
     navigator.geolocation.getCurrentPosition(
       p => res({ lat:p.coords.latitude, lon:p.coords.longitude, acc:p.coords.accuracy, t:Date.now() }),
-      e => rej(new Error(e.code===1 ? 'Standortzugriff verweigert' : 'Standort nicht verfügbar')),
+      e => {
+        if(inFrame){
+          getPosFromParent().then(res).catch(() => {
+            rej(new Error(e.code===1 ? 'Standortzugriff verweigert' : 'Standort nicht verfügbar'));
+          });
+        } else {
+          rej(new Error(e.code===1 ? 'Standortzugriff verweigert' : 'Standort nicht verfügbar'));
+        }
+      },
       { enableHighAccuracy:true, timeout:10000, maximumAge:30000 });
   });
 }
@@ -585,11 +633,16 @@ async function locate(silent){
     byDistance = false; $('#btnNearest').classList.remove('on');
     if(!silent) toast(e.message);
     const b = $('#locBanner');
-    b.innerHTML = e.message === 'Standortzugriff verweigert'
-      ? '<b>Standort ist aus.</b> Einschalten: iPhone-Einstellungen → Datenschutz & Sicherheit → Ortungsdienste → <b>Safari-Websites</b> → „Beim Verwenden der App“. Danach ZNA-Navi neu öffnen.<div class="row"><button class="btn small" id="locRetry">Nochmal versuchen</button></div>'
-      : '<b>Standort gerade nicht verfügbar.</b><div class="row"><button class="btn small" id="locRetry">Nochmal versuchen</button></div>';
+    const isMac = /Macintosh|Mac OS X/i.test(navigator.userAgent) && !/iPhone|iPad|iPod/i.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1);
+    const hint = isMac
+      ? '<b>Standort im Browser nicht freigegeben.</b> Auf dem Mac: <b>Safari → Einstellungen → Websites → Standort</b> für <b>board.vjbackhaus.de</b> &amp; <b>navi.vjbackhaus.de</b> auf „Erlauben“ stellen (und unter macOS <i>Systemeinstellungen → Datenschutz &amp; Sicherheit → Ortungsdienste → Safari</i> aktivieren).'
+      : '<b>Standort ist aus.</b> Einschalten: iPhone-Einstellungen → Datenschutz &amp; Sicherheit → Ortungsdienste → <b>Safari-Websites</b> → „Beim Verwenden der App“. Danach ZNA-Navi neu öffnen.';
+    b.innerHTML = (e.message === 'Standortzugriff verweigert' ? hint : '<b>Standort gerade nicht verfügbar.</b>')
+      + '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn small" id="locRetry">Nochmal versuchen</button><button class="btn small" id="locFallbackMuc">Standard (München) nutzen</button><button class="btn small" id="locDismiss">Ausblenden</button></div>';
     b.hidden = false;
     $('#locRetry').onclick = () => locate(false);
+    $('#locFallbackMuc').onclick = () => { pos = { ...MUC, acc: 500, t: Date.now() }; byDistance = true; $('#btnNearest').classList.add('on'); b.hidden = true; render(); };
+    $('#locDismiss').onclick = () => { b.hidden = true; };
   }
   locating = false; render();
 }
