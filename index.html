@@ -473,8 +473,8 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.16.2';
-const APP_DATE = '2026-11-16';
+const APP_VERSION = '1.16.3';
+const APP_DATE = '2026-11-18';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
@@ -598,7 +598,8 @@ async function locate(silent){
 const APPS = { waze:'Waze', gmaps:'Google Maps', apple:'Apple Karten' };
 const isAndroid = /Android/i.test(navigator.userAgent);
 const curApp = () => APPS[state.settings.navApp] ? state.settings.navApp : 'waze';
-function linkMode(force){ let m = force || state.settings.linkMode; if(m === 'auto') m = isStandalone() ? 'scheme' : 'universal'; return m; }
+const isInIframe = () => { try { return window.self !== window.top; } catch (e) { return true; } };
+function linkMode(force){ let m = force || state.settings.linkMode; if(m === 'auto') m = (isStandalone() || isInIframe()) ? 'scheme' : 'universal'; return m; }
 function navUrl(it, force, appOverride){
   const lat = (+it.lat).toFixed(6), lon = (+it.lon).toFixed(6), app = appOverride || curApp();
   // Google/Apple-Schemata gibt es auf Android nicht – dort immer Web-Link (öffnet die App)
@@ -732,7 +733,8 @@ const ICON_GRID = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>';
 
 function tileHTML(t){
-  return `<a class="tile${t.cls || ''}" href="${esc(t.href || '#')}" ${t.attrs || ''}${t.title ? ` title="${esc(t.title)}"` : ''}>
+  const tgt = (t.href && t.href !== '#' && !/target=/i.test(t.attrs || '')) ? ' target="_top"' : '';
+  return `<a class="tile${t.cls || ''}" href="${esc(t.href || '#')}"${tgt} ${t.attrs || ''}${t.title ? ` title="${esc(t.title)}"` : ''}>
     <div class="go">${t.icon}</div>
     <div class="name">${esc(t.name)}</div>
     <div class="side">${t.dist ? `<span class="dist">${t.dist}</span>` : ''}</div>
@@ -850,7 +852,13 @@ $('#list').addEventListener('click', e => {
   }
   // sonst: Adress- oder Waze-Kachel – echter Link öffnet Waze
   if(query.trim()) resetOnReturn = true;
-  if(a.getAttribute('href') && a.getAttribute('href') !== '#') skipNextOpen = true;
+  const href = a.getAttribute('href');
+  if(href && href !== '#'){
+    skipNextOpen = true;
+    if(isInIframe()){
+      try { window.parent.postMessage({ type: 'zna-open-url', url: href }, '*'); } catch (err) {}
+    }
+  }
 });
 $('#navSel').addEventListener('click', e => {
   const b = e.target.closest('button[data-app]'); if(!b) return;
@@ -858,7 +866,13 @@ $('#navSel').addEventListener('click', e => {
   if(app === curApp()){
     // Doppelfunktion: bereits gewählte App antippen = App öffnen
     skipNextOpen = true;
-    location.href = appOpenUrl(app);
+    const u = appOpenUrl(app);
+    if(isInIframe()){
+      try { window.parent.postMessage({ type: 'zna-open-url', url: u }, '*'); } catch (err) {}
+      try { window.top.location.href = u; } catch (err) { location.href = u; }
+    } else {
+      location.href = u;
+    }
     return;
   }
   state.settings.navApp = app; save(); render();
