@@ -21,6 +21,7 @@ Die Version steht an drei Stellen und wird bei jeder Änderung gemeinsam hochgez
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.16.5 | 2026-11-19 | Siri-Ansage: `RD_Sonderbetten_…` als „Sonder-Betten“ (saubere Aussprache statt „Sonderbeten“, ohne Doppelung) |
 | 1.16.2 | 2026-11-16 | Siri-Ansage: Kurzwahl-Ziffern als Wörter mit Pausen wie im Funk („zwo, fünf, eins, drei“) – letzte Ziffer klang vorher wie eine Aufzählung |
 | 1.16.1 | 2026-11-16 | Siri-Kurzbefehl 1.2: Ansage mit Kurzwahlen steht fertig in `leitstellen-index.json` (ohne Schleife/Textvergleich – Kurzwahlen kamen vorher nicht an); App erzeugt den Index im neuen Format |
 | 1.16.0 | 2026-11-16 | Leitstellen in der App bearbeiten (Name, Sitz, Ort, Funkgruppen, Landkreise): gilt sofort auf dem Handy, mit GitHub-Schlüssel Hochladen von `leitstellen.json` + `leitstellen-index.json` (Siri); RD_Betten_M Kurzwahl 2511 |

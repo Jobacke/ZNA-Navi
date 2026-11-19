@@ -62,13 +62,16 @@ def baue_index(ils):
 # ---------------------------------------------------------------- Ansage-Text (identisch im Kurzbefehl)
 ZIFFERN = [('0', 'null'), ('1', 'eins'), ('2', 'zwo'), ('3', 'drei'), ('4', 'vier'), ('5', 'fünf'), ('6', 'sechs'), ('7', 'sieben'), ('8', 'acht'), ('9', 'neun')]
 FUNK_ERSETZEN = [   # (Suche, Ersatz) – reguläre Ausdrücke, nacheinander
+    (r"(?i)RD_Sonderbetten_[A-Za-z0-9]+", "Sonder-Betten"),
     (r"RD_Betten_[A-Za-z0-9]+", "Bettenkanal"),
     (r"RD_ILS_[A-Za-z0-9]+", "Rettungsdienst"),
     (r"RD_[0-9]+_[A-Za-z0-9]+", "Rettungsdienst"),
     (r"\s*[–-]?\s*\(?Bettenanforderung\)?", ""),
+    (r"(?i)\s*[–-]?\s*\(Sonderbetten\)", ""),
     (r"[()]", ""),
-    (r"\s*–\s*", ", "),
+    (r"\s*–\s*|\s+-\s+", ", "),
     (r"_", " "),
+    (r"(?i)\bSonderbetten\b", "Sonder-Betten"),
     (r"([0-9])(?=[0-9])", "$1, "),          # Kurzwahl Ziffer für Ziffer mit Pause: 1913 → 1, 9, 1, 3
 ] + [(z, w) for z, w in ZIFFERN]           # … als Wörter wie im Funk (zwo statt zwei): eins, neun, eins, drei –
                                            # keine Ziffer am Satzende, sonst liest Siri „3. Rettungsdienst“ als Aufzählung

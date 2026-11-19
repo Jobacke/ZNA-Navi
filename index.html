@@ -473,8 +473,8 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.16.4';
-const APP_DATE = '2026-11-18';
+const APP_VERSION = '1.16.5';
+const APP_DATE = '2026-11-19';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
@@ -1755,9 +1755,13 @@ function kbSchreibweisen(k){
   return v;
 }
 // Ansage für Siri – identisch zu FUNK_ERSETZEN / NAME_ERSETZEN in kurzbefehl/gen_kurzbefehl.py
-const kbFunk = f => f.join('. ').replace(/RD_Betten_[A-Za-z0-9]+/g, 'Bettenkanal').replace(/RD_ILS_[A-Za-z0-9]+/g, 'Rettungsdienst')
-  .replace(/RD_[0-9]+_[A-Za-z0-9]+/g, 'Rettungsdienst').replace(/\s*[–-]?\s*\(?Bettenanforderung\)?/g, '').replace(/[()]/g, '')
-  .replace(/\s*–\s*/g, ', ').replace(/_/g, ' ').replace(/([0-9])(?=[0-9])/g, '$1, ')
+const kbFunk = f => f.join('. ')
+  .replace(/RD_Sonderbetten_[A-Za-z0-9]+/gi, 'Sonder-Betten')
+  .replace(/RD_Betten_[A-Za-z0-9]+/g, 'Bettenkanal').replace(/RD_ILS_[A-Za-z0-9]+/g, 'Rettungsdienst')
+  .replace(/RD_[0-9]+_[A-Za-z0-9]+/g, 'Rettungsdienst').replace(/\s*[–-]?\s*\(?Bettenanforderung\)?/g, '')
+  .replace(/\s*[–-]?\s*\(Sonderbetten\)/gi, '').replace(/[()]/g, '')
+  .replace(/\s*–\s*|\s+-\s+/g, ', ').replace(/_/g, ' ').replace(/\bSonderbetten\b/gi, 'Sonder-Betten')
+  .replace(/([0-9])(?=[0-9])/g, '$1, ')
   .replace(/[0-9]/g, z => KB_ZIFFERN[z]);   // Ziffern als Wörter wie im Funk, mit Pausen – sonst „3. Rettungsdienst“ = Aufzählung
 const KB_ZIFFERN = ['null', 'eins', 'zwo', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun'];
 const kbName = n => n.replace(/^ILS\s+/, 'Leitstelle ').replace(/\bFFB\b/g, 'Fürstenfeldbruck').replace(/\s*\/\s*/g, ' und ');
