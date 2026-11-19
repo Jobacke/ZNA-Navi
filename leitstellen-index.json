@@ -53,7 +53,7 @@
   "miltenberg": {"ils": "ILS Bayerischer Untermain", "name": "Leitstelle Bayerischer Untermain", "funk": ""},
   "muehldorfainn": {"ils": "ILS Traunstein", "name": "Leitstelle Traunstein", "funk": "Rettungsdienst, Kurzwahl drei, sechs, eins, drei. Bettenkanal, Kurzwahl drei, sechs, eins, zwo"},
   "muehldorfaminn": {"ils": "ILS Traunstein", "name": "Leitstelle Traunstein", "funk": "Rettungsdienst, Kurzwahl drei, sechs, eins, drei. Bettenkanal, Kurzwahl drei, sechs, eins, zwo"},
-  "muenchen": {"ils": "ILS München", "name": "Leitstelle München", "funk": "Rettungsdienst Nord, Kurzwahl zwo, fünf, eins, drei. Rettungsdienst Süd, Kurzwahl zwo, fünf, eins, vier. Bettenkanal, Kurzwahl zwo, fünf, eins, eins"},
+  "muenchen": {"ils": "ILS München", "name": "Leitstelle München", "funk": "Rettungsdienst Nord, Kurzwahl zwo, fünf, eins, drei. Rettungsdienst Süd, Kurzwahl zwo, fünf, eins, vier. Bettenkanal, Kurzwahl zwo, fünf, eins, zwo. RD Sonderbetten M - Kurzwahl zwo, fünf, eins, fünf Sonderbetten"},
   "neuburgschrobenhausen": {"ils": "ILS Region Ingolstadt", "name": "Leitstelle Region Ingolstadt", "funk": ""},
   "neumarktidopf": {"ils": "ILS Regensburg", "name": "Leitstelle Regensburg", "funk": ""},
   "neumarktinderoberpfalz": {"ils": "ILS Regensburg", "name": "Leitstelle Regensburg", "funk": ""},
