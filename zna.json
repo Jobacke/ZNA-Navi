@@ -1,8 +1,8 @@
 {
   "app": "zna-navi",
   "v": 1,
-  "rev": 16,
-  "updated": "2026-11-15",
+  "rev": 17,
+  "updated": "2026-11-20",
   "groups": ["ZNA","JUH / Dienst","Privat","Mopped","Pflegeheime","Sanitätsdienste"],
   "items": [
     {"name":"B 33","group":"JUH / Dienst","w3w":"baumhaus.ölig.verbunden","lat":48.09992,"lon":11.537,"note":"Moppeds JUH"},
@@ -27,6 +27,7 @@
     {"name":"Sanstation C","group":"Sanitätsdienste","w3w":"noten.einzelne.geteilt","lat":48.152315,"lon":11.581737},
     {"name":"Technikum","group":"Sanitätsdienste","w3w":"lindwurm.fein.anlegern","lat":48.123531,"lon":11.60669},
     {"name":"Tonhalle","group":"Sanitätsdienste","w3w":"erfreut.über.anliegen","lat":48.123639,"lon":11.606771},
+    {"name":"Artemed","group":"ZNA","w3w":"heftig.mitgefühl.trinken","lat":48.103237,"lon":11.547985},
     {"name":"Augustinum","group":"ZNA","w3w":"kurve.trinken.exzellentes","lat":48.122049,"lon":11.487464},
     {"name":"Barmherzige Brüder","group":"ZNA","w3w":"offenen.nachbau.lesbar","lat":48.155846,"lon":11.510649},
     {"name":"Bogenhausen","group":"ZNA","w3w":"vorweisen.gelangen.stroh","lat":48.154579,"lon":11.624333},
@@ -46,7 +47,6 @@
     {"name":"Portalklinik","group":"ZNA","w3w":"lenkung.manche.preis","lat":48.132748,"lon":11.561045},
     {"name":"Rechts","group":"ZNA","w3w":"einreise.becken.eule","lat":48.136225,"lon":11.601095},
     {"name":"Rechts Tor 6","group":"ZNA","w3w":"atomen.volles.dauernd","lat":48.138247,"lon":11.599519},
-    {"name":"Rinecker","group":"ZNA","w3w":"heftig.mitgefühl.trinken","lat":48.103237,"lon":11.547985},
     {"name":"RK1","group":"ZNA","w3w":"vorzeitig.tante.unter","lat":48.154067,"lon":11.531503},
     {"name":"Schwabing Kinder","group":"ZNA","w3w":"lebendig.schwarm.fernseher","lat":48.171855,"lon":11.581048}
   ],
@@ -60,6 +60,7 @@
     "anfahrtwernervon": "waze://?ll=48.171262,11.543912&navigate=yes",
     "anfahrtwernervonlinde": "waze://?ll=48.171262,11.543912&navigate=yes",
     "anfahrtwernervonlindehalle": "waze://?ll=48.171262,11.543912&navigate=yes",
+    "artemed": "waze://?ll=48.103237,11.547985&navigate=yes",
     "augustinum": "waze://?ll=48.122049,11.487464&navigate=yes",
     "b": "waze://?ll=48.099920,11.537000&navigate=yes",
     "b 33": "waze://?ll=48.099920,11.537000&navigate=yes",
@@ -128,7 +129,6 @@
     "rechtstor": "waze://?ll=48.138247,11.599519&navigate=yes",
     "rechtstor6": "waze://?ll=48.138247,11.599519&navigate=yes",
     "rechtstorsechs": "waze://?ll=48.138247,11.599519&navigate=yes",
-    "rinecker": "waze://?ll=48.103237,11.547985&navigate=yes",
     "rk 1": "waze://?ll=48.154067,11.531503&navigate=yes",
     "rk eins": "waze://?ll=48.154067,11.531503&navigate=yes",
     "rk1": "waze://?ll=48.154067,11.531503&navigate=yes",
