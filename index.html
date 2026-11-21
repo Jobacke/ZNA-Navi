@@ -484,25 +484,74 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.17.2';
-const APP_DATE = '2026-11-19';
+const APP_VERSION = '1.17.3';
+const APP_DATE = '2026-11-21';
 
 /* ---------- Speicher ---------- */
 const KEY = 'zna-navi-v1';
+const BOARD_FILTER_KEY = 'zna_filter_v1';
 let canStore = true;
 const DEFAULTS = { theme:'auto', topPad:'auto', ilsWatch:true, ilsLast:'', blz:{ on:false, name:'Blitzer starten', gap:30, end:true, endName:'Blitzer Ruhe' }, lastUse:0, linkMode:'auto', navApp:'waze', sort:'usage', autoNear:false, autoSrv:true, w3wKey:'', group:'ZNA', serverSeen:'', snap:null,
   gh:{ token:'', repo:'Jobacke/ZNA-Navi', path:'zna.json', branch:'main', auto:true } };
 let state = { items:[], settings:{...DEFAULTS} };
+function applyBoardFilter(raw){
+  if(!raw) return false;
+  try{
+    const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if(!d || typeof d !== 'object') return false;
+    let changed = false;
+    if(Array.isArray(d.sel)){
+      state.settings.sel = d.sel.map(String);
+      state.settings.group = state.settings.sel.length === 1 ? state.settings.sel[0] : '__all';
+      changed = true;
+    }
+    if(d.navApp && ['waze','gmaps','apple'].includes(d.navApp)){
+      state.settings.navApp = d.navApp;
+      changed = true;
+    }
+    return changed;
+  }catch(e){ return false; }
+}
+function syncFilterToBoard(){
+  if(window.parent === window) return;
+  try{
+    const sel = Array.isArray(state.settings.sel)
+      ? state.settings.sel
+      : ((!state.settings.group || state.settings.group === '__all') ? [] : [state.settings.group]);
+    window.parent.postMessage({
+      type: 'board-storage-set',
+      key: BOARD_FILTER_KEY,
+      value: JSON.stringify({ sel, navApp: state.settings.navApp || 'waze' })
+    }, '*');
+  }catch(e){}
+}
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
     if(raw){ const d = JSON.parse(raw); state.items = Array.isArray(d.items)?d.items:[]; state.settings = {...DEFAULTS, ...(d.settings||{})}; }
   }catch(e){ canStore = false; }
+  /* Board-Tresor synchron aus URL-Hash übernehmen (überlebt iOS Safari ITP im Board-Cockpit) */
+  try{
+    const m = (location.hash || '').match(/board_zna_filter=([^&]+)/);
+    if(m && m[1]){
+      const decoded = decodeURIComponent(m[1]);
+      if(applyBoardFilter(decoded)) save(true);
+      const rest = location.hash.replace(/(?:^#|&)board_zna_filter=[^&]*/g, '').replace(/^&/, '');
+      history.replaceState(null, '', location.pathname + location.search + (rest ? '#' + rest : ''));
+    }
+  }catch(e){}
 }
 function save(){
   if(!canStore) return;
   try{ localStorage.setItem(KEY, JSON.stringify({ items: state.items.map(({_d, ...i}) => i), settings: state.settings })); }
   catch(e){ canStore = false; $('#storageWarn').hidden = false; }
+}
+if(window.parent !== window){
+  window.addEventListener('message', e => {
+    if(e.data && e.data.type === 'board-storage-value' && e.data.key === BOARD_FILTER_KEY && e.data.value){
+      if(applyBoardFilter(e.data.value)){ save(true); render._chips = ''; render(); }
+    }
+  });
 }
 
 /* ---------- Helfer ---------- */
@@ -950,7 +999,7 @@ $('#navSel').addEventListener('click', e => {
     }
     return;
   }
-  state.settings.navApp = app; save(); render();
+  state.settings.navApp = app; save(); syncFilterToBoard(); render();
   toast(`Routen mit ${APPS[app]} – nochmal antippen öffnet ${APPS[app]}`, 2600);
 });
 function updChipFade(){
@@ -966,7 +1015,7 @@ $('#chips').addEventListener('click', e => {
   // „Alle“ setzt zurück, sonst Gruppe an-/abwählen (mehrere gleichzeitig möglich)
   if(g === '__all') setSel([]);
   else setSel(sel.includes(g) ? sel.filter(x => x !== g) : [...sel, g]);
-  render._keepScroll = true; save(); render();
+  render._keepScroll = true; save(); syncFilterToBoard(); render();
 });
 /* Gruppen umsortieren: lange drücken, dann nach links/rechts schieben */
 (function chipSort(){
@@ -2059,6 +2108,9 @@ setTimeout(fitHeader, 500);
 
 /* ---------- Start ---------- */
 load();
+if(window.parent !== window){
+  try{ window.parent.postMessage({ type: 'board-storage-get', key: BOARD_FILTER_KEY }, '*'); }catch(e){}
+}
 applyTheme();
 showVersion();
 fitHeader();
