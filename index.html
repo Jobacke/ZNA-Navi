@@ -64,19 +64,19 @@
   .search{flex:1;min-width:0;padding:8.5px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);font-size:14.5px;outline:none;transition:border-color .15s,background .15s}
   .search:focus{border-color:rgba(51,204,255,.55);background:rgba(255,255,255,.08)}
 
-  /* 1. Filterzeile: Kategorien (kompakte Glas-Chips, aktiv in ZNA-Karmesin) */
-  .chipwrap{position:relative;margin-top:7px;min-width:0}
-  .chips{display:flex;gap:5px;overflow-x:auto;min-width:0;scrollbar-width:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding:1px 0}
-  .chips .chip{scroll-snap-align:start}
-  .chipwrap::before,.chipwrap::after{content:"";position:absolute;top:0;bottom:0;width:18px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:2}
-  .chipwrap::before{left:0;background:linear-gradient(90deg,#04070e,rgba(4,7,14,0))}
-  .chipwrap::after{right:0;background:linear-gradient(270deg,#04070e,rgba(4,7,14,0))}
-  .chipwrap.more-left::before,.chipwrap.more-right::after{opacity:1}
-  .chips::-webkit-scrollbar{display:none}
-  .chip{flex:none;padding:4.5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#9aa8c7;cursor:pointer;font-weight:600;font-size:12.5px;line-height:1.25;letter-spacing:.01em;transition:background .15s,border-color .15s,color .15s}
-  .chip.on{background:linear-gradient(135deg,#e52d42,#c81b31);color:#fff;border-color:rgba(255,130,145,.52);box-shadow:0 2px 9px rgba(224,40,60,.34)}
+  /* 1. Filterzeile: Alle Kategorien auf einen Blick mit Leuchtpunkten (kein Seitwärts-Scrollen!) */
+  .chipwrap{position:relative;margin-top:7px;min-width:0;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.085);border-radius:11px;padding:5px 6px}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+  .chipwrap::before,.chipwrap::after{display:none}
+  .chip{display:inline-flex;align-items:center;gap:5.5px;flex:0 1 auto;padding:4px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045);color:#9aa8c7;cursor:pointer;font-weight:600;font-size:12px;line-height:1.25;letter-spacing:.01em;transition:background .15s,border-color .15s,color .15s,box-shadow .15s;white-space:nowrap}
+  .chip .cdot{width:7px;height:7px;border-radius:50%;flex:none;border:1.5px solid rgba(154,168,199,.45);background:transparent;transition:background .15s,border-color .15s,box-shadow .15s}
+  .chip.on{background:rgba(224,40,60,.17);color:#fff;border-color:rgba(255,84,112,.52);box-shadow:0 1px 8px rgba(224,40,60,.2)}
+  .chip.on .cdot{background:#ff3856;border-color:#ff7a8f;box-shadow:0 0 8px rgba(255,56,86,.9)}
+  .chip[data-g="__all"].on{background:rgba(51,204,255,.15);border-color:rgba(51,204,255,.46);box-shadow:0 1px 8px rgba(51,204,255,.18)}
+  .chip[data-g="__all"].on .cdot{background:#33ccff;border-color:#9ce8ff;box-shadow:0 0 8px rgba(51,204,255,.9)}
+  @media (max-width:390px){ .chip{padding:3.5px 8px;font-size:11.5px;gap:5px} }
   .chip{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-  .chips.sorting{scroll-snap-type:none}
+  .chips.sorting{touch-action:none}
   .chip.lift{position:relative;z-index:3;border-color:var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.45);opacity:.96}
 
   /* 2. Filterzeile: Navi-Optionen (schlanke Glas-Segmented-Leiste, aktiv in Navigations-Cyan) */
@@ -478,7 +478,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.17.0';
+const APP_VERSION = '1.17.1';
 const APP_DATE = '2026-11-19';
 
 /* ---------- Speicher ---------- */
@@ -807,10 +807,8 @@ function render(){
   const chipsKey = chips.join('|') + '#' + sel.join('|');
   if(render._chips !== chipsKey){
     render._chips = chipsKey;
-    const keep = render._keepScroll ? $('#chips').scrollLeft : null; render._keepScroll = false;
-    $('#chips').innerHTML = chips.map(x => `<button class="chip${isOn(x)?' on':''}" data-g="${esc(x)}">${x==='__all'?'Alle':esc(x)}</button>`).join('');
-    if(keep !== null) $('#chips').scrollLeft = keep;
-    else{ const on = $('#chips .chip.on'); if(on) on.scrollIntoView({ block:'nearest', inline:'center' }); }
+    render._keepScroll = false;
+    $('#chips').innerHTML = chips.map(x => `<button type="button" class="chip${isOn(x)?' on':''}" data-g="${esc(x)}"><span class="cdot" aria-hidden="true"></span><span>${x==='__all'?'Alle':esc(x)}</span></button>`).join('');
     updChipFade();
   }
   $('#groupList').innerHTML = gs.map(x=>`<option value="${esc(x)}">`).join('');
