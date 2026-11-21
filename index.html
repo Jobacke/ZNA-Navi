@@ -46,44 +46,48 @@
 
   /* Kopfzeile fest oben – inkl. Abstand für Uhrzeit/Dynamic Island */
   :root{--sat:env(safe-area-inset-top)}
-  /* Kopf in Schwarz = gleiche Farbe wie die iOS-Statusleiste, kein sichtbarer Rand */
+  /* Kopf in Schwarz/Obsidian = nahtloser Übergang zur iOS-Statusleiste */
   html{background:#000}
-  header{position:relative;flex:none;z-index:10;background:#000;color:var(--text);
-    padding:calc(var(--sat) + 10px) clamp(10px,3.5vw,14px) 10px;border-bottom:1px solid var(--line);min-width:0;max-width:100%}
-  .bar{display:flex;align-items:center;gap:clamp(6px,2.4vw,10px);min-width:0}
+  header{position:relative;flex:none;z-index:10;background:linear-gradient(180deg,#000 0%,#060a14 100%);color:var(--text);
+    padding:calc(var(--sat) + 8px) clamp(10px,3.5vw,14px) 9px;border-bottom:1px solid rgba(255,255,255,.09);min-width:0;max-width:100%}
+  .bar{display:flex;align-items:center;gap:clamp(6px,2vw,9px);min-width:0}
   .bar > *{min-width:0}
-  .logo{width:clamp(32px,10vw,40px);height:clamp(32px,10vw,40px);border-radius:10px;flex:none;display:block;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-  h1{font-size:clamp(17px,5.4vw,21px);margin:0;flex:1 1 auto;min-width:0;letter-spacing:.2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  h1 .ver{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.3px;margin-top:2px}
-  .iconbtn{width:clamp(38px,11.5vw,44px);height:clamp(38px,11.5vw,44px);border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;flex:none}
-  .iconbtn.on{background:var(--accent);border-color:var(--accent)}
-  .iconbtn svg{width:22px;height:22px}
+  .logo{width:clamp(30px,9vw,36px);height:clamp(30px,9vw,36px);border-radius:9px;flex:none;display:block;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+  h1{font-size:clamp(16px,4.8vw,19px);margin:0;flex:1 1 auto;min-width:0;letter-spacing:.15px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  h1 .ver{display:block;font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.3px;margin-top:1px}
+  .iconbtn{width:clamp(35px,10vw,39px);height:clamp(35px,10vw,39px);border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.055);display:grid;place-items:center;cursor:pointer;flex:none;transition:background .15s,border-color .15s,transform .12s}
+  .iconbtn:active{transform:scale(.95)}
+  .iconbtn.on{background:linear-gradient(135deg,#e52d42,#c81b31);border-color:rgba(255,120,135,.55);box-shadow:0 2px 10px rgba(224,40,60,.35)}
+  .iconbtn svg{width:19px;height:19px}
 
-  .chipwrap{position:relative;margin-top:10px;min-width:0}
-  .chips{display:flex;gap:8px;overflow-x:auto;min-width:0;scrollbar-width:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .searchwrap{display:flex;gap:7px;margin-top:8px;min-width:0}
+  .search{flex:1;min-width:0;padding:8.5px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);font-size:14.5px;outline:none;transition:border-color .15s,background .15s}
+  .search:focus{border-color:rgba(51,204,255,.55);background:rgba(255,255,255,.08)}
+
+  /* 1. Filterzeile: Kategorien (kompakte Glas-Chips, aktiv in ZNA-Karmesin) */
+  .chipwrap{position:relative;margin-top:7px;min-width:0}
+  .chips{display:flex;gap:5px;overflow-x:auto;min-width:0;scrollbar-width:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding:1px 0}
   .chips .chip{scroll-snap-align:start}
-  /* Verlauf am Rand zeigt: hier geht es weiter */
-  .chipwrap::before,.chipwrap::after{content:"";position:absolute;top:0;bottom:0;width:28px;pointer-events:none;opacity:0;transition:opacity .2s}
-  .chipwrap::before{left:0;background:linear-gradient(90deg,#000,rgba(0,0,0,0))}
-  .chipwrap::after{right:0;background:linear-gradient(270deg,#000,rgba(0,0,0,0))}
+  .chipwrap::before,.chipwrap::after{content:"";position:absolute;top:0;bottom:0;width:18px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:2}
+  .chipwrap::before{left:0;background:linear-gradient(90deg,#04070e,rgba(4,7,14,0))}
+  .chipwrap::after{right:0;background:linear-gradient(270deg,#04070e,rgba(4,7,14,0))}
   .chipwrap.more-left::before,.chipwrap.more-right::after{opacity:1}
   .chips::-webkit-scrollbar{display:none}
-  .chip{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;font-weight:600;font-size:15px}
-  .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .chip{flex:none;padding:4.5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#9aa8c7;cursor:pointer;font-weight:600;font-size:12.5px;line-height:1.25;letter-spacing:.01em;transition:background .15s,border-color .15s,color .15s}
+  .chip.on{background:linear-gradient(135deg,#e52d42,#c81b31);color:#fff;border-color:rgba(255,130,145,.52);box-shadow:0 2px 9px rgba(224,40,60,.34)}
   .chip{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   .chips.sorting{scroll-snap-type:none}
   .chip.lift{position:relative;z-index:3;border-color:var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.45);opacity:.96}
-  .searchwrap{display:flex;gap:8px;margin-top:10px;min-width:0}
-  .search{flex:1;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);outline:none}
-  .search:focus{border-color:var(--blue)}
-  .navsel{display:flex;min-width:0;margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
-  .navsel button{flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--muted);padding:7px 2px;border-radius:9px;font-weight:700;font-size:clamp(12px,3.7vw,14px);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* 2. Filterzeile: Navi-Optionen (schlanke Glas-Segmented-Leiste, aktiv in Navigations-Cyan) */
+  .navsel{display:flex;min-width:0;margin-top:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:2.5px;gap:2.5px}
+  .navsel button{flex:1 1 0;min-width:0;border:0;background:transparent;color:#8c9bb8;padding:5px 4px;border-radius:7px;font-weight:600;font-size:clamp(11.5px,3.3vw,13px);line-height:1.2;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .16s,color .16s,box-shadow .16s}
   .navsel .sm{display:none}
-  @media (max-width:370px){ .navsel .lg{display:none} .navsel .sm{display:inline} .navsel button .op{margin-left:3px} }
-  .navsel button.on{background:var(--text);color:var(--bg)}
-  .navsel button .op{display:none;margin-left:5px;font-size:13px}
+  @media (max-width:360px){ .navsel .lg{display:none} .navsel .sm{display:inline} .navsel button .op{margin-left:3px} }
+  .navsel button.on{background:linear-gradient(135deg,rgba(51,204,255,.22),rgba(31,111,235,.26));color:#eef8ff;box-shadow:inset 0 0 0 1px rgba(51,204,255,.46),0 1px 8px rgba(51,204,255,.15)}
+  .navsel button .op{display:none;margin-left:4px;font-size:11.5px;color:#7ee0ff}
   .navsel button.on .op{display:inline}
-  .michint{margin-top:8px;padding:9px 12px;border-radius:10px;background:var(--infobg);color:var(--infotext);font-size:14px}
+  .michint{margin-top:6px;padding:8px 11px;border-radius:9px;background:var(--infobg);color:var(--infotext);font-size:13px}
   #btnMic.on{background:var(--addr);border-color:var(--addr);animation:pulse 1.2s infinite}
   @keyframes pulse{50%{opacity:.6}}
 
@@ -134,22 +138,23 @@
   .fab{position:fixed;right:calc(16px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));z-index:6;
     padding:14px 20px;border-radius:999px;border:0;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer;display:none}
   .editing .fab{display:block}
-  .endbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:9px 12px;border-radius:12px;
-    border:1px solid var(--dangerline);background:#2a0f14;color:var(--dangertext);font-weight:700;font-size:15px;cursor:pointer;text-decoration:none}
-  .endbtn:active{background:#3d151c}
-  .endbtn svg{width:18px;height:18px}
+  .endbtn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:6px;padding:6.5px 10px;border-radius:9px;
+    border:1px solid rgba(255,84,112,.36);background:rgba(224,40,60,.11);color:#ff8f9c;font-weight:600;font-size:13px;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s}
+  .endbtn:active{background:rgba(224,40,60,.24)}
+  .endbtn svg{width:15px;height:15px;flex:none}
   .endbtn[hidden],.editing .endbtn{display:none}
-  /* Werkzeugzeile: Leitstellen + Fahrt beenden nebeneinander */
-  .toolrow{display:flex;gap:8px;margin-top:8px;min-width:0}
+  /* Werkzeugzeile (letzte Zeile im Kopfbereich): Leitstellen + Fahrt beenden nebeneinander */
+  .toolrow{display:flex;gap:7px;margin-top:6px;min-width:0}
   .toolrow > *{flex:1 1 0;min-width:0;margin-top:0;width:auto}
   .editing .toolrow{display:none}
   .toolrow .endbtn{white-space:nowrap;overflow:hidden}
-  @media (max-width:370px){ .toolrow{gap:6px} .toolrow .ilsbtn,.toolrow .endbtn{font-size:14px;padding:9px 8px;gap:5px} }
-  .ilsbtn{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;border-radius:12px;border:1px solid var(--line);
-    background:var(--panel);color:var(--text);font-weight:700;font-size:15px;cursor:pointer;white-space:nowrap;overflow:hidden}
+  @media (max-width:370px){ .toolrow{gap:6px} .toolrow .ilsbtn,.toolrow .endbtn{font-size:12.5px;padding:6px 8px;gap:5px} }
+  .ilsbtn{display:flex;align-items:center;justify-content:center;gap:6px;padding:6.5px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.11);
+    background:rgba(255,255,255,.05);color:#dce5f7;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;overflow:hidden;transition:background .15s,border-color .15s}
   .ilsbtn span{overflow:hidden;text-overflow:ellipsis}
-  .ilsbtn svg{width:18px;height:18px;flex:none}
-  .ilsbtn.known{border-color:var(--ok)}
+  .ilsbtn svg{width:15px;height:15px;flex:none;color:#8fa0c0}
+  .ilsbtn.known{border-color:rgba(46,194,126,.48);background:rgba(46,194,126,.1);color:#e9fff4}
+  .ilsbtn.known svg{color:#2ec27e}
 
   /* Leitstellen */
   .tile.ils .go{background:var(--addr)}
@@ -229,6 +234,7 @@
     </button>
   </form>
   <div class="michint" id="micHint" hidden></div>
+  <div class="chipwrap"><div class="chips" id="chips"></div></div>
   <div class="navsel" id="navSel" aria-label="Navigations-App">
     <button type="button" data-app="waze">Waze<span class="op">↗</span></button><button type="button" data-app="gmaps"><span class="lg">Google Maps</span><span class="sm">Google</span><span class="op">↗</span></button><button type="button" data-app="apple"><span class="lg">Apple Karten</span><span class="sm">Apple</span><span class="op">↗</span></button>
   </div>
@@ -236,7 +242,6 @@
     <button type="button" class="ilsbtn" id="btnIls" title="Leitstellen" aria-label="Leitstellen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="1.6"/><path d="M8.5 5.5a5 5 0 0 0 0 7M15.5 5.5a5 5 0 0 1 0 7M5.6 2.8a9 9 0 0 0 0 12.4M18.4 2.8a9 9 0 0 1 0 12.4M12 11l-3.5 10M12 11l3.5 10M9.6 18h4.8"/></svg><span id="btnIlsTxt">Leitstellen</span></button>
     <a class="endbtn" id="endBtn" href="#" hidden><svg viewBox="0 0 24 24" fill="none" stroke="#ff5470" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>Fahrt beenden</a>
   </div>
-  <div class="chipwrap"><div class="chips" id="chips"></div></div>
 </header>
 <div id="scroller">
 
@@ -473,7 +478,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.16.5';
+const APP_VERSION = '1.17.0';
 const APP_DATE = '2026-11-19';
 
 /* ---------- Speicher ---------- */
