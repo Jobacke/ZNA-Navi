@@ -64,16 +64,22 @@
   .search{flex:1;min-width:0;padding:8.5px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);font-size:14.5px;outline:none;transition:border-color .15s,background .15s}
   .search:focus{border-color:rgba(51,204,255,.55);background:rgba(255,255,255,.08)}
 
-  /* 1. Filterzeile: Alle Kategorien auf einen Blick mit Leuchtpunkten (kein Seitwärts-Scrollen!) */
+  /* 1. Filterzeile: Alle Kategorien auf einen Blick mit individueller Farbcodierung (Leuchtpunkte) */
   .chipwrap{position:relative;margin-top:7px;min-width:0;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.085);border-radius:11px;padding:5px 6px}
   .chips{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
   .chipwrap::before,.chipwrap::after{display:none}
-  .chip{display:inline-flex;align-items:center;gap:5.5px;flex:0 1 auto;padding:4px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045);color:#9aa8c7;cursor:pointer;font-weight:600;font-size:12px;line-height:1.25;letter-spacing:.01em;transition:background .15s,border-color .15s,color .15s,box-shadow .15s;white-space:nowrap}
-  .chip .cdot{width:7px;height:7px;border-radius:50%;flex:none;border:1.5px solid rgba(154,168,199,.45);background:transparent;transition:background .15s,border-color .15s,box-shadow .15s}
-  .chip.on{background:rgba(224,40,60,.17);color:#fff;border-color:rgba(255,84,112,.52);box-shadow:0 1px 8px rgba(224,40,60,.2)}
-  .chip.on .cdot{background:#ff3856;border-color:#ff7a8f;box-shadow:0 0 8px rgba(255,56,86,.9)}
-  .chip[data-g="__all"].on{background:rgba(51,204,255,.15);border-color:rgba(51,204,255,.46);box-shadow:0 1px 8px rgba(51,204,255,.18)}
-  .chip[data-g="__all"].on .cdot{background:#33ccff;border-color:#9ce8ff;box-shadow:0 0 8px rgba(51,204,255,.9)}
+  .chip{--c:#38bdf8;--cbg:rgba(56,189,248,.16);--cbd:rgba(56,189,248,.5);--cr:rgba(56,189,248,.55);--cg:rgba(56,189,248,.24);
+    display:inline-flex;align-items:center;gap:5.5px;flex:0 1 auto;padding:4px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045);color:#9aa8c7;cursor:pointer;font-weight:600;font-size:12px;line-height:1.25;letter-spacing:.01em;transition:background .15s,border-color .15s,color .15s,box-shadow .15s;white-space:nowrap}
+  .chip[data-c="red"]    {--c:#ff3856;--cbg:rgba(255,56,86,.17);--cbd:rgba(255,84,112,.54);--cr:rgba(255,56,86,.62);--cg:rgba(255,56,86,.26)}
+  .chip[data-c="gold"]   {--c:#f5b82e;--cbg:rgba(245,184,46,.17);--cbd:rgba(245,184,46,.54);--cr:rgba(245,184,46,.62);--cg:rgba(245,184,46,.24)}
+  .chip[data-c="emerald"]{--c:#10b981;--cbg:rgba(16,185,129,.17);--cbd:rgba(52,211,153,.52);--cr:rgba(16,185,129,.62);--cg:rgba(16,185,129,.24)}
+  .chip[data-c="orange"] {--c:#ff6b2b;--cbg:rgba(255,107,43,.17);--cbd:rgba(255,126,66,.54);--cr:rgba(255,107,43,.62);--cg:rgba(255,107,43,.26)}
+  .chip[data-c="violet"] {--c:#a78bfa;--cbg:rgba(167,139,250,.17);--cbd:rgba(167,139,250,.52);--cr:rgba(167,139,250,.62);--cg:rgba(167,139,250,.24)}
+  .chip[data-c="teal"]   {--c:#2dd4bf;--cbg:rgba(45,212,191,.16);--cbd:rgba(45,212,191,.50);--cr:rgba(45,212,191,.62);--cg:rgba(45,212,191,.24)}
+  .chip[data-c="pink"]   {--c:#f472b6;--cbg:rgba(244,114,182,.16);--cbd:rgba(244,114,182,.50);--cr:rgba(244,114,182,.62);--cg:rgba(244,114,182,.24)}
+  .chip .cdot{width:7px;height:7px;border-radius:50%;flex:none;border:1.5px solid var(--cr);background:transparent;transition:background .15s,border-color .15s,box-shadow .15s}
+  .chip.on{background:var(--cbg);color:#fff;border-color:var(--cbd);box-shadow:0 1px 9px var(--cg)}
+  .chip.on .cdot{background:var(--c);border-color:#fff;box-shadow:0 0 8px var(--c)}
   @media (max-width:390px){ .chip{padding:3.5px 8px;font-size:11.5px;gap:5px} }
   .chip{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   .chips.sorting{touch-action:none}
@@ -478,7 +484,7 @@
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.17.1';
+const APP_VERSION = '1.17.2';
 const APP_DATE = '2026-11-19';
 
 /* ---------- Speicher ---------- */
@@ -799,6 +805,19 @@ function tileHTML(t){
     ${t.icon2 ? `<div class="ico2" aria-hidden="true">${t.icon2}</div>` : ''}<div class="meta">${t.meta || ''}</div>
     <div class="side2">${t.right || ''}</div></a>`;
 }
+function chipColor(g){
+  if(g === '__all') return 'cyan';
+  const s = String(g || '').toLowerCase();
+  if(/\bzna\b|klinik|notaufnahme/.test(s)) return 'red';
+  if(/juh|dienst|wache/.test(s)) return 'gold';
+  if(/privat/.test(s)) return 'emerald';
+  if(/mopped|moto|bike/.test(s)) return 'orange';
+  if(/pflege|heim/.test(s)) return 'violet';
+  if(/sani/.test(s)) return 'teal';
+  const pal = ['pink','gold','teal','violet','orange','emerald'];
+  let h = 0; for(let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return pal[h % pal.length];
+}
 function render(){
   const gs = groups();
   const sel = selGroups();
@@ -808,7 +827,7 @@ function render(){
   if(render._chips !== chipsKey){
     render._chips = chipsKey;
     render._keepScroll = false;
-    $('#chips').innerHTML = chips.map(x => `<button type="button" class="chip${isOn(x)?' on':''}" data-g="${esc(x)}"><span class="cdot" aria-hidden="true"></span><span>${x==='__all'?'Alle':esc(x)}</span></button>`).join('');
+    $('#chips').innerHTML = chips.map(x => `<button type="button" class="chip${isOn(x)?' on':''}" data-g="${esc(x)}" data-c="${chipColor(x)}"><span class="cdot" aria-hidden="true"></span><span>${x==='__all'?'Alle':esc(x)}</span></button>`).join('');
     updChipFade();
   }
   $('#groupList').innerHTML = gs.map(x=>`<option value="${esc(x)}">`).join('');
